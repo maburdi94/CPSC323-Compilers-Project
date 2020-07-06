@@ -9,13 +9,38 @@
 #include <iostream>
 #include <sstream>
 
-enum Token {IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER};
+enum Token {IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, NONE};
+
+std::ostream& operator<<(std::ostream& os, Token t)
+{
+    switch(t)
+    {
+        case IDENTIFIER: os << "IDENTIFIER";    break;
+        case KEYWORD:    os << "KEYWORD";       break;
+        case SEPARATOR:  os << "SEPARATOR";     break;
+        case OPERATOR:   os << "OPERATOR";      break;
+        case INTEGER:    os << "INTEGER";       break;
+        default:         os << "";              break;
+    }
+    return os;
+}
 
 typedef struct {
-    Token type;
+    Token type = NONE;
     std::string lexeme;
 } LexerOutputType;
 
+
+const std::string keywords[] = {
+    "while",
+    "if",
+    "fi",
+    "otherwise",
+    "get",
+    "put",
+    "integer",
+    "boolean"
+};
 
 
 bool isoperator(char &c) {
@@ -23,7 +48,9 @@ bool isoperator(char &c) {
     c == '+' ||
     c == '-' ||
     c == '*' ||
-    c == '/';
+    c == '/' ||
+    c == '<' ||
+    c == '>';
 }
 
 bool isseparator(char &c) {
@@ -32,7 +59,13 @@ bool isseparator(char &c) {
     c == ';';
 }
 
-LexerOutputType &&lexer(std::stringstream &s) {
+bool iskeyword(std::string &s) {
+    size_t len = sizeof(keywords) / sizeof(keywords[0]);
+    auto f = std::find(keywords, keywords + len, s);
+    return f != (keywords + len);
+}
+
+LexerOutputType lexer(std::stringstream &s) {
     
     LexerOutputType t;
     
@@ -44,36 +77,84 @@ LexerOutputType &&lexer(std::stringstream &s) {
         
         if (isspace(c)) {
             
-        /*  Space (non-accepting state)
-            Transition => { epsilon } */
-            
-            // Discard space
+            // Discard space. Epsilon. No action taken.
             t.lexeme.pop_back();
+            
+            if (t.type != NONE) {
+                // Terminating
+                break;
+            }
+            
         }
-        
-        if (isalpha(c)) {
-            t.type = IDENTIFIER;
+        else if (isalpha(c)) {
+            
+            // We don't know if it is KEYWORD or IDENTIFIER.
+            
+            if (t.type == KEYWORD || t.type == IDENTIFIER) {
+                // Append char...
+            }
+            else if (t.type == NONE) {
+                t.type = KEYWORD;
+            }
+            else { // OPERATOR, SEPARATOR, INTEGER
+                s.putback(c);
+                break;
+            }
         }
         else if (isseparator(c)) {
-            t.type = SEPARATOR;
+            if (t.type == NONE) {
+                t.type = SEPARATOR;
+            }
+            else {
+                s.putback(c);
+                break;
+            }
         }
         else if (isoperator(c)) {
-            t.type = OPERATOR;
+            if (t.type == NONE) {
+                t.type = OPERATOR;
+            }
+            else {
+                s.putback(c);
+                break;
+            }
         }
         else if (isnumber(c)) {
-            t.type = INTEGER;
+            if (t.type == NONE) {
+                t.type = INTEGER;
+            }
+            else if (t.type == KEYWORD) {
+                t.type = IDENTIFIER;
+            }
+            else if (t.type == INTEGER || t.type == IDENTIFIER) {
+                // Append...
+            }
+            else {
+                s.putback(c);
+                break;
+            }
         }
     }
     
-    return std::move(t);
+    
+    // We assumed keyword, but now we check.
+    // If not keyword, must be identifier.
+    if (t.type == KEYWORD && !iskeyword(t.lexeme)) {
+        t.type = IDENTIFIER;
+    }
+    
+    return t;
 }
 
 
 
 int main(int argc, const char * argv[]) {
     
-    std::string s = "INT    ax12    =   45;";
+    std::string s = "integer    ax12    =   45;";
     std::stringstream is(s);
-    
-    lexer(is);
+
+    while (!is.eof()) {
+        auto t = lexer(is);
+        std::cout << t.type << ": " << t.lexeme << std::endl;
+    }
 }
