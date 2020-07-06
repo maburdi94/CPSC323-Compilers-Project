@@ -20,7 +20,7 @@ std::ostream& operator<<(std::ostream& os, Token t)
         case SEPARATOR:  os << "SEPARATOR";     break;
         case OPERATOR:   os << "OPERATOR";      break;
         case INTEGER:    os << "INTEGER";       break;
-        default:         os << "";              break;
+        default:         os.setstate(std::ios_base::failbit);
     }
     return os;
 }
@@ -38,6 +38,8 @@ const std::string keywords[] = {
     "otherwise",
     "get",
     "put",
+    "true",
+    "false",
     "integer",
     "boolean"
 };
@@ -161,7 +163,11 @@ LexerOutputType lexer(std::stringstream &s) {
 
 int main(int argc, const char * argv[]) {
     
-    std::string s = "integer    ax12    =   45;";
+    std::string s = "\
+        integer    ax12    =   45;\
+        boolean    b       =   true;\
+        if (b) ax12 = 54 fi\
+    ";
     std::stringstream is(s);
 
     while (!is.eof()) {
