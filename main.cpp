@@ -72,13 +72,9 @@ LexerOutputType lexer(std::stringstream &s) {
     char c;
     while (s.get(c)) {
         
-        // Consume input
-        t.lexeme += c;
-        
         if (isspace(c)) {
             
             // Discard space. Epsilon. No action taken.
-            t.lexeme.pop_back();
             
             if (t.type != NONE) {
                 // Terminating
@@ -87,14 +83,16 @@ LexerOutputType lexer(std::stringstream &s) {
             
         }
         else if (isalpha(c)) {
-            
             // We don't know if it is KEYWORD or IDENTIFIER.
-            
             if (t.type == KEYWORD || t.type == IDENTIFIER) {
-                // Append char...
+                // Accept
+                t.lexeme += c;
             }
             else if (t.type == NONE) {
                 t.type = KEYWORD;
+                
+                // Accept
+                t.lexeme += c;
             }
             else { // OPERATOR, SEPARATOR, INTEGER
                 s.putback(c);
@@ -104,6 +102,9 @@ LexerOutputType lexer(std::stringstream &s) {
         else if (isseparator(c)) {
             if (t.type == NONE) {
                 t.type = SEPARATOR;
+                
+                // Accept
+                t.lexeme += c;
             }
             else {
                 s.putback(c);
@@ -113,6 +114,9 @@ LexerOutputType lexer(std::stringstream &s) {
         else if (isoperator(c)) {
             if (t.type == NONE) {
                 t.type = OPERATOR;
+                
+                // Accept
+                t.lexeme += c;
             }
             else {
                 s.putback(c);
@@ -122,12 +126,19 @@ LexerOutputType lexer(std::stringstream &s) {
         else if (isnumber(c)) {
             if (t.type == NONE) {
                 t.type = INTEGER;
+                
+                // Accept
+                t.lexeme += c;
             }
             else if (t.type == KEYWORD) {
                 t.type = IDENTIFIER;
+                
+                // Accept
+                t.lexeme += c;
             }
             else if (t.type == INTEGER || t.type == IDENTIFIER) {
-                // Append...
+                // Accept
+                t.lexeme += c;
             }
             else {
                 s.putback(c);
