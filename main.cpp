@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 enum Token {IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, NONE};
@@ -58,6 +59,8 @@ bool isoperator(char &c) {
 bool isseparator(char &c) {
     return c == '(' ||
     c == ')' ||
+    c == '{' ||
+    c == '}' ||
     c == ';';
 }
 
@@ -67,12 +70,12 @@ bool iskeyword(std::string &s) {
     return f != (keywords + len);
 }
 
-LexerOutputType lexer(std::stringstream &s) {
+LexerOutputType lexer(std::istream &is) {
     
     LexerOutputType t;
     
     char c;
-    while (s.get(c)) {
+    while (is.get(c)) {
         
         if (isspace(c)) {
             
@@ -97,7 +100,7 @@ LexerOutputType lexer(std::stringstream &s) {
                 t.lexeme += c;
             }
             else { // OPERATOR, SEPARATOR, INTEGER
-                s.putback(c);
+                is.putback(c);
                 break;
             }
         }
@@ -109,7 +112,7 @@ LexerOutputType lexer(std::stringstream &s) {
                 t.lexeme += c;
             }
             else {
-                s.putback(c);
+                is.putback(c);
                 break;
             }
         }
@@ -121,7 +124,7 @@ LexerOutputType lexer(std::stringstream &s) {
                 t.lexeme += c;
             }
             else {
-                s.putback(c);
+                is.putback(c);
                 break;
             }
         }
@@ -143,7 +146,7 @@ LexerOutputType lexer(std::stringstream &s) {
                 t.lexeme += c;
             }
             else {
-                s.putback(c);
+                is.putback(c);
                 break;
             }
         }
@@ -163,15 +166,15 @@ LexerOutputType lexer(std::stringstream &s) {
 
 int main(int argc, const char * argv[]) {
     
-    std::string s = "\
-        integer    ax12    =   45;\
-        boolean    b       =   true;\
-        if (b) ax12 = 54 fi\
-    ";
-    std::stringstream is(s);
-
-    while (!is.eof()) {
-        auto t = lexer(is);
+    std::ifstream ifile;
+    ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test2.rat");
+    
+    std::string s;
+    
+    while (!ifile.eof()) {
+        auto t = lexer(ifile);
         std::cout << t.type << ": " << t.lexeme << std::endl;
     }
+    
+    ifile.close();
 }

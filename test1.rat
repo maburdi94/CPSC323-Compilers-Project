@@ -1,0 +1,3 @@
+integer    ax12    =   45;
+boolean    b       =   true;
+if (b) ax12 = 54 fi
