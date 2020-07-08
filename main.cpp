@@ -8,15 +8,15 @@
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
 
-enum Token {IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, NONE};
+enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
 
 std::ostream& operator<<(std::ostream& os, Token t)
 {
     switch(t)
     {
         case IDENTIFIER: os << "IDENTIFIER";    break;
+        case UNKNOWN:    os << "UNKNOWN";       break;
         case KEYWORD:    os << "KEYWORD";       break;
         case SEPARATOR:  os << "SEPARATOR";     break;
         case OPERATOR:   os << "OPERATOR";      break;
@@ -64,6 +64,10 @@ bool isseparator(char &c) {
     c == ';';
 }
 
+bool isunderscore(char &c) {
+    return c == '_';
+}
+
 bool iskeyword(std::string &s) {
     size_t len = sizeof(keywords) / sizeof(keywords[0]);
     auto f = std::find(keywords, keywords + len, s);
@@ -87,14 +91,14 @@ LexerOutputType lexer(std::istream &is) {
             }
             
         }
-        else if (isalpha(c)) {
-            // We don't know if it is KEYWORD or IDENTIFIER.
-            if (t.type == KEYWORD || t.type == IDENTIFIER) {
+        else if (isalpha(c) || isunderscore(c)) {
+            if (t.type == IDENTIFIER || t.type == UNKNOWN) {
                 // Accept
                 t.lexeme += c;
             }
             else if (t.type == NONE) {
-                t.type = KEYWORD;
+                // Assume identifier
+                t.type = IDENTIFIER;
                 
                 // Accept
                 t.lexeme += c;
@@ -135,13 +139,13 @@ LexerOutputType lexer(std::istream &is) {
                 // Accept
                 t.lexeme += c;
             }
-            else if (t.type == KEYWORD) {
-                t.type = IDENTIFIER;
+            else if (t.type == IDENTIFIER) {
+                t.type = UNKNOWN;
                 
                 // Accept
                 t.lexeme += c;
             }
-            else if (t.type == INTEGER || t.type == IDENTIFIER) {
+            else if (t.type == INTEGER || t.type == UNKNOWN) {
                 // Accept
                 t.lexeme += c;
             }
@@ -155,8 +159,8 @@ LexerOutputType lexer(std::istream &is) {
     
     // We assumed keyword, but now we check.
     // If not keyword, must be identifier.
-    if (t.type == KEYWORD && !iskeyword(t.lexeme)) {
-        t.type = IDENTIFIER;
+    if (t.type == IDENTIFIER && iskeyword(t.lexeme)) {
+        t.type = KEYWORD;
     }
     
     return t;
@@ -168,8 +172,6 @@ int main(int argc, const char * argv[]) {
     
     std::ifstream ifile;
     ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test2.rat");
-    
-    std::string s;
     
     while (!ifile.eof()) {
         auto t = lexer(ifile);
