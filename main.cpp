@@ -11,7 +11,7 @@
 
 enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
 
-std::ostream& operator<<(std::ostream& os, Token t)
+std::ostream& operator<<(std::ostream& os, Token &t)
 {
     switch(t)
     {
@@ -90,6 +90,18 @@ LexerOutputType lexer(std::istream &is) {
                 break;
             }
             
+        }
+        else if (c == '[') {
+            is.get(c);
+            if (c == '*') {
+                // This is a comment
+                for (char b=c; is.get(c) && !is.eof(); b=c) {
+                    if (b=='*' && c==']') break;
+                }
+            } else {
+                // Not a comment
+                is.putback(c);
+            }
         }
         else if (isalpha(c) || isunderscore(c)) {
             if (t.type == IDENTIFIER || t.type == UNKNOWN) {
@@ -171,7 +183,7 @@ LexerOutputType lexer(std::istream &is) {
 int main(int argc, const char * argv[]) {
     
     std::ifstream ifile;
-    ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test2.rat");
+    ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test1.rat");
     
     while (!ifile.eof()) {
         auto t = lexer(ifile);

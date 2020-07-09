@@ -1,3 +1,5 @@
 integer    ax12    =   45;
-boolean    b       =   true;
+boolean    b_dog       =   true;
+[* This is a comment *]
 if (b) ax12 = 54 fi
+[* End comment *]
