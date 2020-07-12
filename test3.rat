@@ -1,0 +1,4 @@
+integer kb24 = 8;
+boolean a_points = true;
+
+if (a) kb24 = 17 fi
