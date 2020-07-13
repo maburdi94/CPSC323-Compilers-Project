@@ -11,3 +11,5 @@ if (b) ax12 = 54 fi
 [* Testing PROGRAM DECLARATION *]
 $$
 
+[* Testing equality symbol *]
+==

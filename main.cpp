@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 
-enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN, PROGRAM_DECLARATION, EQUALITY, SPECIAL_SYMBOL};
+enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN, PROGRAM_DECLARATION, EQUALITY, SPECIAL_SYMBOL, ASSIGNMENT};
 
 std::ostream& operator<<(std::ostream& os, Token &t)
 {
@@ -25,6 +25,7 @@ std::ostream& operator<<(std::ostream& os, Token &t)
         case PROGRAM_DECLARATION: os << "PROGRAM_DECLARATION";  break;
         case EQUALITY:   os << "EQUALITY";  break;
         case SPECIAL_SYMBOL:   os << "SPECIAL_SYMBOL";  break;
+        case ASSIGNMENT:   os << "ASSIGNMENT";  break;
         default:         os.setstate(std::ios_base::failbit);
     }
     return os;
@@ -111,6 +112,23 @@ LexerOutputType lexer(std::istream &is) {
                     is.putback(c);
                     t.lexeme += c;
                 }
+            }
+        }
+        else if (is_equal(c)) {
+            is.get(c);
+            if (is_equal(c)) {
+                t.type = EQUALITY;
+
+                t.lexeme += c;
+                t.lexeme += c;
+            }
+            else {
+                is.unget();
+                is.unget();
+                is.get(c);
+
+                t.type = ASSIGNMENT;
+                t.lexeme += c;
             }
         }
         else if (c == '[') {
