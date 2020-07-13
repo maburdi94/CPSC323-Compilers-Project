@@ -9,7 +9,8 @@
 #include <iostream>
 #include <fstream>
 
-enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN, PROGRAM_DECLARATION, EQUALITY, SPECIAL_SYMBOL, ASSIGNMENT};
+
+enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
 
 std::ostream& operator<<(std::ostream& os, Token &t)
 {
@@ -21,11 +22,7 @@ std::ostream& operator<<(std::ostream& os, Token &t)
         case SEPARATOR:  os << "SEPARATOR";     break;
         case OPERATOR:   os << "OPERATOR";      break;
         case INTEGER:    os << "INTEGER";       break;
-
-        case PROGRAM_DECLARATION: os << "PROGRAM_DECLARATION";  break;
-        case EQUALITY:   os << "EQUALITY";  break;
-        case SPECIAL_SYMBOL:   os << "SPECIAL_SYMBOL";  break;
-        case ASSIGNMENT:   os << "ASSIGNMENT";  break;
+            
         default:         os.setstate(std::ios_base::failbit);
     }
     return os;
@@ -68,11 +65,8 @@ bool isoperator(char &c) {
     c == '*' ||
     c == '/' ||
     c == '<' ||
-    c == '>';
-}
-
-bool is_equal (char &c) {
-    return c == '=';
+    c == '>' ||
+    c == '=';
 }
 
 bool isseparator(char &c) {
@@ -93,9 +87,6 @@ bool iskeyword(std::string &s) {
     return f != (keywords + len);
 }
 
-bool is_dollar(char &c) {
-    return c == '$';
-}
 
 ///////////////////////////////////////////
 //          Finite State Machine         //
@@ -109,7 +100,7 @@ LexerOutputType lexer(std::istream &is) {
     char c;
     while (is.get(c)) {
         
-        if (isspace(c)) {
+        if (isspace(c) || c == '$') {
             
             // Discard space. Epsilon. No action taken.
             
@@ -118,34 +109,6 @@ LexerOutputType lexer(std::istream &is) {
                 break;
             }
             
-        }
-        else if (is_dollar(c)) {
-            if (t.type == NONE) {
-                is.get(c);
-                if(is_dollar(c)) {
-                    t.type = PROGRAM_DECLARATION;
-                    t.lexeme += c;
-                    is.putback(c);
-                    t.lexeme += c;
-                }
-            }
-        }
-        else if (is_equal(c)) {
-            is.get(c);
-            if (is_equal(c)) {
-                t.type = EQUALITY;
-
-                t.lexeme += c;
-                t.lexeme += c;
-            }
-            else {
-                is.unget();
-                is.unget();
-                is.get(c);
-
-                t.type = ASSIGNMENT;
-                t.lexeme += c;
-            }
         }
         else if (c == '[') {
             is.get(c);
@@ -190,34 +153,19 @@ LexerOutputType lexer(std::istream &is) {
         }
         else if (isoperator(c)) {
             if (t.type == NONE) {
-
-                is.get(c);
-
-                if (is_equal(c) || isoperator(c)) {
-                    t.type = SPECIAL_SYMBOL;
-
-                    is.unget();
-                    is.unget();
-                    is.get(c);
-
-                    t.lexeme += c;
-
-                    is.get(c);
-
-                    t.lexeme += c;
-                }
-                else{
-                    is.unget();
-                    is.unget();
-                    is.get(c);
-
-                    t.type = OPERATOR;
-
-                    // Accept
-                    t.lexeme += c;
-                }
+                t.type = OPERATOR;
                 
-       
+                // Accept
+                t.lexeme += c;
+                
+                if (c == '=') {
+                    if (is.get(c) && c == '=') {
+                        // Equality operator ==
+                        t.lexeme += c;
+                    } else {
+                        is.putback(c);
+                    }
+                }
             }
             else {
                 is.putback(c);
@@ -263,7 +211,7 @@ LexerOutputType lexer(std::istream &is) {
 int main(int argc, const char * argv[]) {
     
     std::ifstream ifile;
-    ifile.open("/Users/naoki_atkins/Desktop/CPSC323-Compilers-Project/test1.rat");
+    ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test1.rat");
     
     while (!ifile.eof()) {
         auto t = lexer(ifile);
