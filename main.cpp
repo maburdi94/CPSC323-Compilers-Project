@@ -47,7 +47,9 @@ const std::string keywords[] = {
     "true",
     "false",
     "integer",
-    "boolean"
+    "boolean",
+    "int",
+    "bool"
 };
 
 

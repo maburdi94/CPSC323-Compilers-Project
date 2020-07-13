@@ -13,3 +13,6 @@ $$
 
 [* Testing equality symbol *]
 ==
+
+[* Testing to see if compiler will handle no spaces correctly *]
+a=2+1;int67
