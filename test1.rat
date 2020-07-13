@@ -3,3 +3,11 @@ boolean    b_dog       =   true;
 [* This is a comment *]
 if (b) ax12 = 54 fi
 [* End comment *]
+
+[* Testing special symbols *]
+// /= += 
+
+
+[* Testing PROGRAM DECLARATION *]
+$$
+

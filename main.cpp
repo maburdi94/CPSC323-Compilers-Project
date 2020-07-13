@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 
-enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
+enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN, PROGRAM_DECLARATION, EQUALITY, SPECIAL_SYMBOL};
 
 std::ostream& operator<<(std::ostream& os, Token &t)
 {
@@ -21,6 +21,10 @@ std::ostream& operator<<(std::ostream& os, Token &t)
         case SEPARATOR:  os << "SEPARATOR";     break;
         case OPERATOR:   os << "OPERATOR";      break;
         case INTEGER:    os << "INTEGER";       break;
+
+        case PROGRAM_DECLARATION: os << "PROGRAM_DECLARATION";  break;
+        case EQUALITY:   os << "EQUALITY";  break;
+        case SPECIAL_SYMBOL:   os << "SPECIAL_SYMBOL";  break;
         default:         os.setstate(std::ios_base::failbit);
     }
     return os;
@@ -47,13 +51,16 @@ const std::string keywords[] = {
 
 
 bool isoperator(char &c) {
-    return c == '=' ||
-    c == '+' ||
+    return c == '+' ||
     c == '-' ||
     c == '*' ||
     c == '/' ||
     c == '<' ||
     c == '>';
+}
+
+bool is_equal (char &c) {
+    return c == '=';
 }
 
 bool isseparator(char &c) {
@@ -74,6 +81,10 @@ bool iskeyword(std::string &s) {
     return f != (keywords + len);
 }
 
+bool is_dollar(char &c) {
+    return c == '$';
+}
+
 LexerOutputType lexer(std::istream &is) {
     
     LexerOutputType t;
@@ -90,6 +101,17 @@ LexerOutputType lexer(std::istream &is) {
                 break;
             }
             
+        }
+        else if (is_dollar(c)) {
+            if (t.type == NONE) {
+                is.get(c);
+                if(is_dollar(c)) {
+                    t.type = PROGRAM_DECLARATION;
+                    t.lexeme += c;
+                    is.putback(c);
+                    t.lexeme += c;
+                }
+            }
         }
         else if (c == '[') {
             is.get(c);
@@ -134,10 +156,34 @@ LexerOutputType lexer(std::istream &is) {
         }
         else if (isoperator(c)) {
             if (t.type == NONE) {
-                t.type = OPERATOR;
+
+                is.get(c);
+
+                if (is_equal(c) || isoperator(c)) {
+                    t.type = SPECIAL_SYMBOL;
+
+                    is.unget();
+                    is.unget();
+                    is.get(c);
+
+                    t.lexeme += c;
+
+                    is.get(c);
+
+                    t.lexeme += c;
+                }
+                else{
+                    is.unget();
+                    is.unget();
+                    is.get(c);
+
+                    t.type = OPERATOR;
+
+                    // Accept
+                    t.lexeme += c;
+                }
                 
-                // Accept
-                t.lexeme += c;
+       
             }
             else {
                 is.putback(c);
