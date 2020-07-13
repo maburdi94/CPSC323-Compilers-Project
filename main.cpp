@@ -31,10 +31,19 @@ std::ostream& operator<<(std::ostream& os, Token &t)
     return os;
 }
 
+///////////////////////////////////////////
+//        Lexer Output Type Token        //
+///////////////////////////////////////////
+
 typedef struct {
     Token type = NONE;
     std::string lexeme;
 } LexerOutputType;
+
+///////////////////////////////////////////
+//          Helper Functions             //
+//  input:  &char        output: bool    //
+///////////////////////////////////////////
 
 
 const std::string keywords[] = {
@@ -87,6 +96,11 @@ bool iskeyword(std::string &s) {
 bool is_dollar(char &c) {
     return c == '$';
 }
+
+///////////////////////////////////////////
+//          Finite State Machine         //
+//  input:  char        output: token    //
+///////////////////////////////////////////
 
 LexerOutputType lexer(std::istream &is) {
     
