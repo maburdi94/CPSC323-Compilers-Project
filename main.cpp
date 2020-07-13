@@ -210,8 +210,15 @@ LexerOutputType lexer(std::istream &is) {
 
 int main(int argc, const char * argv[]) {
     
+    std::string filename = "";
+    
     std::ifstream ifile;
-    ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test1.rat");
+    
+    std::cout << "Enter filename (.rat file): ";
+    std::getline(std::cin, filename);
+    
+    // /Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test1.rat
+    ifile.open(filename);
     
     while (!ifile.eof()) {
         auto t = lexer(ifile);
