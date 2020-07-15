@@ -1,10 +1,3 @@
-//
-//  main.cpp
-//  Assignment 1
-//
-//  Created by Michael Burdi on 7/2/20.
-//  Copyright © 2020 Michael Burdi. All rights reserved.
-//
 
 #include <iostream>
 #include <fstream>
@@ -28,21 +21,16 @@ std::ostream& operator<<(std::ostream& os, Token &t)
     return os;
 }
 
-///////////////////////////////////////////
-//        Lexer Output Type Token        //
-///////////////////////////////////////////
 
+
+/* Lexer Output Type Token */
 typedef struct {
     Token type = NONE;
     std::string lexeme;
 } LexerOutputType;
 
-///////////////////////////////////////////
-//          Helper Functions             //
-//  input:  &char        output: bool    //
-///////////////////////////////////////////
 
-
+/* Keywords  */
 const std::string keywords[] = {
     "while",
     "if",
@@ -55,6 +43,9 @@ const std::string keywords[] = {
     "integer",
     "boolean"
 };
+
+
+/* Helper Functions */
 
 
 bool isoperator(char &c) {
@@ -98,7 +89,7 @@ LexerOutputType lexer(std::istream &is) {
     char c;
     while (is.get(c)) {
         
-        if (isspace(c) || c == '$') {
+        if (isspace(c)) {
             
             // Discard space. Epsilon. No action taken.
             
@@ -108,16 +99,29 @@ LexerOutputType lexer(std::istream &is) {
             }
             
         }
+        else if (c == '$') {
+            t.type = UNKNOWN;
+            t.lexeme += c;
+            
+            if (is.get(c) && c == '$') {
+                t.type = KEYWORD;
+                t.lexeme += c;
+            } else {
+                is.putback(c);
+            }
+            
+            break;
+        }
         else if (c == '[') {
-            is.get(c);
-            if (c == '*') {
+            if (is.get(c) && c == '*') {
                 // This is a comment
                 for (char b=c; is.get(c) && !is.eof(); b=c) {
                     if (b=='*' && c==']') break;
                 }
             } else {
-                // Not a comment
-                is.putback(c);
+                t.type = UNKNOWN;
+                
+                t.lexeme += c;
             }
         }
         else if (isalpha(c) || isunderscore(c)) {
