@@ -7,7 +7,11 @@ b_dog = 32;
 
 [* This is a comment *]
 
-if (b_dog==12) ax12 = 54 otherwise ax12 = 55 fi
+if (b_dog==12) {
+    ax12 = 54;
+} otherwise {
+    ax12 = 55;
+} fi
 
 [* End comment *]
 

@@ -1,43 +1,26 @@
 
-R1. <Rat20SU>  ::=   $$  <Opt Declaration List>    <Statement List> $$
-R2. <Opt Declaration List> ::= <Declaration List>   |    <Empty>
-R3. <Declaration List>  := <Declaration> ;     |      <Declaration> ; <Declaration List>
-R4. <Declaration> ::=   <Qualifier >  <identifier>
-R5: <Qualifier> ::=  integer |  boolean
-R6. <Statement List> ::=   <Statement>   | <Statement> <Statement List>
-R7. <Statement> ::=   <Compound>  |  <Assign>  |   <If>  |  <Get> | <Put> | <Print>   |   <Scan>   |  <While>
-R8. <Compound> ::=   {  <Statement List>  }
-R9. <Assign> ::=     <Identifier> = <Expression> ;
-R10. <If> ::=     if  ( <Condition>  ) <Statement>   fi   |
-                          if  ( <Condition>  ) <Statement>   otherwise  <Statement>  fi
-R11. <Put> ::=     put ( <identifier> );
-R12. <Get> ::=    get ( <Identifier> );
-R13. <While> ::=  while ( <Condition>  )  <Statement>
-R14. <Condition> ::=     <Expression>  <Relop>   <Expression>
-R15. <Relop> ::=        ==     |    >     |   <
-R16. <Expression>  ::=    <Expression> + <Term>    | <Expression>  - <Term>    |    <Term>
-R17. <Term>    ::=       <Term>  *  <Factor>     |   <Term>  /  <Factor>     |     <Factor>
-R18. <Factor> ::=      -  <Primary>    |    <Primary>
-R19. <Primary> ::=      <Identifier>  |  <Integer>  |  ( <Expression> )   |  true   |  false
-R20. <Empty>   ::= ε
+R1     <Rat20SU>               ::=  $$  <Opt Declaration List>    <Statement List> $$
+R2     <Opt Declaration List>  ::=  <Declaration List>   |    <Empty>
+R3     <Declaration List>      ::=  <Declaration> ;     |      <Declaration> ; <Declaration List>
+R4     <Declaration>           ::=  <Qualifier >  <identifier>
+R5     <Qualifier>             ::=  integer |  boolean
+R6     <Statement List>        ::=  <Statement>   | <Statement> <Statement List>
+R7     <Statement>             ::=  <Compound>  |  <Assign>  |  <If>  |  <Print>  |  <Scan>  |  <While>
+R8     <Compound>              ::=  {  <Statement List>  }
+R9     <Assign>                ::=  <Identifier> = <Expression> ;
+R10a   <If>                    ::=  if  ( <Condition>  ) <Statement> <Otherwise> fi
+R10b   <Otherwise>             ::=  otherwise  <Statement> | <Empty>
+R11    <Put>                   ::=  put ( <identifier> );
+R12    <Get>                   ::=  get ( <Identifier> );
+R13    <While>                 ::=  while ( <Condition>  ) <Statement>
+R14    <Condition>             ::=  <Expression> <Relop> <Expression>
+R15    <Relop>                 ::=  ==  |  >  |  <
+R16a   <Expression>            ::=  <Term><Expression'>
+R16b   <Expression'>           ::=  +<Term><Expression'>  |  -<Term><Expression'>  |  <Empty>
 
+R17a   <Term>                  ::=  <Factor><Term'>
+R17b   <Term'>                 ::=  *<Factor><Term'>  |  /<Factor><Term'>  |  <Empty>
 
-
-
-
-Fix Left-Recursion
-
-R16. <Expression>  ::=    <Expression> + <Term>  |  <Expression> - <Term>  |  <Term>
-R17. <Term>    ::=       <Term>  *  <Factor>     |   <Term>  /  <Factor>     |     <Factor>
-R18. <Factor> ::=      -  <Primary>    |    <Primary>
-
-goes to...
-
-
-R??. <Expression>   ::=     <Term><Expression'>
-R??. <Expression'>  ::=     +<Term><Expression'>  |  -<Term><Expression'>  |  ε
-
-R??. <Term>         ::=     <Factor><Term'>
-R??. <Term'>        ::=     *<Factor><Term'>  | /<Factor><Term'>  |  ε
-
-R??. <Factor>       ::=     -<Primary>  |  <Primary>
+R18    <Factor>                ::=  -<Primary>  |  <Primary>
+R19    <Primary>               ::=  <Identifier>  |  <Integer>  |  ( <Expression> )  |  true  |  false
+R20    <Empty>                 ::=  ε
