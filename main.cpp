@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <fstream>
-
+#include "parser.h"
 
 enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
 
@@ -219,7 +219,6 @@ int main(int argc, const char * argv[]) {
     std::cout << "Enter filename (.rat file): ";
     std::getline(std::cin, filename);
     
-    // /Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test1.rat
     ifile.open(filename);
     
     while (!ifile.eof()) {

@@ -5,7 +5,7 @@ R3     <Declaration List>      ::=  <Declaration> ;     |      <Declaration> ; <
 R4     <Declaration>           ::=  <Qualifier >  <identifier>
 R5     <Qualifier>             ::=  integer |  boolean
 R6     <Statement List>        ::=  <Statement>   | <Statement> <Statement List>
-R7     <Statement>             ::=  <Compound>  |  <Assign>  |  <If>  |  <Print>  |  <Scan>  |  <While>
+R7     <Statement>             ::=  <Compound>  |  <Assign>  |  <If>  |  <Put>  |  <Get>  |  <While>
 R8     <Compound>              ::=  {  <Statement List>  }
 R9     <Assign>                ::=  <Identifier> = <Expression> ;
 R10a   <If>                    ::=  if  ( <Condition>  ) <Statement> <Otherwise> fi
