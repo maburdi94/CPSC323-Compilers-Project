@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "lexer.h"
-//#include "parser.h"
+#include "parser.h"
 
 int main(int argc, const char * argv[]) {
     
@@ -14,13 +14,10 @@ int main(int argc, const char * argv[]) {
     std::getline(std::cin, filename);
     
     ifile.open(filename);
+
+    Parser parser(ifile);
     
-    Lexer lexer(ifile);
-    
-    while (!ifile.eof()) {
-        auto t = lexer();
-        std::cout << t.type << ": " << t.lexeme << std::endl;
-    }
+    parser();
     
     ifile.close();
 }

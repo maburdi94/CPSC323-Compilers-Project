@@ -12,7 +12,7 @@
 #include <iostream>
 
 class Lexer {
-    std::istream &istream;
+    std::istream *istream;
     
     const std::string keywords[10] = {
         "while",
@@ -36,7 +36,7 @@ public:
         std::string lexeme;
     };
     
-    Lexer(std::istream &is) : istream(is) {}
+    Lexer(std::istream &is) : istream(&is) {}
     
     bool isoperator(char &c) {
         return c == '+' ||
@@ -68,11 +68,17 @@ public:
     
     friend std::ostream& operator<<(std::ostream& os, Token &t);
     
+    /* Allows the use of Lexer object in a conditional statement
+     to test if it has finished analyzing the input. */
+    operator bool() const {
+        return istream->good();
+    }
+    
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
         
         char c;
-        while (istream.get(c)) {
+        while (istream->get(c)) {
             
             if (isspace(c)) {
                 
@@ -88,19 +94,19 @@ public:
                 t.type = UNKNOWN;
                 t.lexeme += c;
                 
-                if (istream.get(c) && c == '$') {
+                if (istream->get(c) && c == '$') {
                     t.type = KEYWORD;
                     t.lexeme += c;
                 } else {
-                    istream.putback(c);
+                    istream->putback(c);
                 }
                 
                 break;
             }
             else if (c == '[') {
-                if (istream.get(c) && c == '*') {
+                if (istream->get(c) && c == '*') {
                     // This is a comment
-                    for (char b=c; istream.get(c) && !istream.eof(); b=c) {
+                    for (char b=c; istream->get(c) && istream; b=c) {
                         if (b=='*' && c==']') break;
                     }
                 } else {
@@ -122,7 +128,7 @@ public:
                     t.lexeme += c;
                 }
                 else { // OPERATOR, SEPARATOR, INTEGER
-                    istream.putback(c);
+                    istream->putback(c);
                     break;
                 }
             }
@@ -134,7 +140,7 @@ public:
                     t.lexeme += c;
                 }
                 else {
-                    istream.putback(c);
+                    istream->putback(c);
                     break;
                 }
             }
@@ -146,16 +152,16 @@ public:
                     t.lexeme += c;
                     
                     if (c == '=') {
-                        if (istream.get(c) && c == '=') {
+                        if (istream->get(c) && c == '=') {
                             // Equality operator ==
                             t.lexeme += c;
                         } else {
-                            istream.putback(c);
+                            istream->putback(c);
                         }
                     }
                 }
                 else {
-                    istream.putback(c);
+                    istream->putback(c);
                     break;
                 }
             }
@@ -177,7 +183,7 @@ public:
                     t.lexeme += c;
                 }
                 else {
-                    istream.putback(c);
+                    istream->putback(c);
                     break;
                 }
             }
