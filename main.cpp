@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "lexer.h"
-#include "parser.h"
+//#include "parser.h"
 
 int main(int argc, const char * argv[]) {
     
