@@ -39,6 +39,7 @@ class Parser {
         { "Primary", { /* id, */ /* int, */ "(", "true", "false" } }
     };
     
+<<<<<<< HEAD
     const std::function<void(void)> Rat20SU = [&]() {
         std::cout << "$$  <Opt Declaration List>    <Statement List> $$";
     };
@@ -119,25 +120,76 @@ class Parser {
         
     };
     
+=======
+>>>>>>> maburdi
 public:
     struct OutputType {};
     
     Lexer lexer;
+    Lexer::OutputType token;
     
     Parser(std::istream &istream) : lexer(istream) {}
     Parser(Lexer &lexer) : lexer(lexer) {}
     
+    void OptDeclList() {
+        token = lexer();
+        
+        std::cout << token;
+        
+        auto match = std::find(first["DeclList"].begin(), first["DeclList"].end(), token);
+        
+        if (match != first["DeclList"].end()) {
+            std::cout << "<Opt Declaration List>  ->  <Declaration List>" << std::endl;
+            
+            DeclList();
+        } else {
+            std::cout << "<Opt Declaration List>  ->  <Empty>" << std::endl;
+        }
+        
+    }
+    
+    void StatementList() {
+        
+    }
+    
+    void Rat20SU() {
+        token = lexer();
+        
+        std::cout << token;
+        
+        if (token.lexeme == "$$") {
+            std::cout << "$$  <Opt Declaration List>    <Statement List> $$" << std::endl;
+            
+            OptDeclList();
+            StatementList();
+        } else {
+            std::cout << "Error: Check syntax for missing $$.";
+        }
+    }
+    void DeclList();
+    void Decl();
+    void Qualifier();
+    void Statement();
+    void Compound();
+    void Assign();
+    void If();
+    void Put();
+    void Get();
+    void While();
+    void Condition();
+    void Relop();
+    void Expression();
+    void Term();
+    void Factor();
+    void Primary();
+    
     OutputType operator()() {
         OutputType t;
         
-        auto token = lexer();
-        while (token.lexeme != "$$" && lexer) token = lexer();
-        
-        if (token.lexeme != "$$") {
-            std::cout << "Error: Check syntax for missing $$.";
-        } else {
-            std::cout << token.lexeme;
-        }
+        // Find start of Rat20SU code
+        do token = lexer(); while (token.lexeme != "$$" && lexer);
+
+        Rat20SU();
         
         return t;
     }

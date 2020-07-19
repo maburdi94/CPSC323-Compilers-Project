@@ -34,6 +34,8 @@ public:
     struct OutputType {
         Token type = NONE;
         std::string lexeme;
+        
+        friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t);
     };
     
     Lexer(std::istream &is) : istream(&is) {}
@@ -199,6 +201,11 @@ public:
         return t;
     }
 };
+
+std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t) {
+    os << t.type << ": " << t.lexeme << std::endl;
+    return os;
+}
 
 std::ostream& operator<<(std::ostream& os, Lexer::Token &t)
 {
