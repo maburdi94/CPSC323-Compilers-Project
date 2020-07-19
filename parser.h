@@ -79,6 +79,10 @@ class Parser {
         
     };
 
+    const std::function<void(void)> Otherwise = [&]() {
+        
+    };
+
     const std::function<void(void)> Put = [&]() {
         
     };
