@@ -35,7 +35,7 @@ public:
         Token type = NONE;
         std::string lexeme;
         
-        friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t);
+        friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
     
     Lexer(std::istream &is) : istream(&is) {}
@@ -58,10 +58,6 @@ public:
         c == ';';
     }
 
-    bool isunderscore(char &c) {
-        return c == '_';
-    }
-
     bool iskeyword(std::string &s) {
         size_t len = sizeof(keywords) / sizeof(keywords[0]);
         auto f = std::find(keywords, keywords + len, s);
@@ -80,114 +76,94 @@ public:
         Lexer::OutputType t;
         
         char c;
+        bool skip = false;
         while (istream->get(c)) {
             
+            if (c == ']' && t.lexeme == "*") {
+                skip = false;
+                t.lexeme = "";
+                continue;
+            }
+            
+            if (c == '*' && t.lexeme == "[") {
+                t.type = NONE;
+                skip = true;
+            }
+            
+            if (skip) {
+                t.lexeme = c;
+                continue;
+            }
+            
             if (isspace(c)) {
-                
-                // Discard space. Epsilon. No action taken.
-                
-                if (t.type != NONE) {
-                    // Terminating
+                if (t.type != NONE)
                     break;
-                }
                 
-            }
-            else if (c == '$') {
-                t.type = UNKNOWN;
-                t.lexeme += c;
-                
-                if (istream->get(c) && c == '$') {
-                    t.type = KEYWORD;
-                    t.lexeme += c;
-                } else {
-                    istream->putback(c);
-                }
-                
-                break;
-            }
-            else if (c == '[') {
-                if (istream->get(c) && c == '*') {
-                    // This is a comment
-                    for (char b=c; istream->get(c) && istream; b=c) {
-                        if (b=='*' && c==']') break;
-                    }
-                } else {
-                    t.type = UNKNOWN;
-                    
-                    t.lexeme += c;
-                }
-            }
-            else if (isalpha(c) || isunderscore(c)) {
-                if (t.type == IDENTIFIER || t.type == UNKNOWN) {
-                    // Accept
-                    t.lexeme += c;
-                }
-                else if (t.type == NONE) {
-                    // Assume identifier
+            } else if (isalpha(c)) {
+                if (t.type == NONE) {
                     t.type = IDENTIFIER;
-                    
-                    // Accept
                     t.lexeme += c;
-                }
-                else { // OPERATOR, SEPARATOR, INTEGER
+                } else if (t.type == IDENTIFIER) {
+                    t.lexeme += c;
+                } else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
+                } else {
                     istream->putback(c);
                     break;
                 }
-            }
-            else if (isseparator(c)) {
+            } else if (c == '_') {
+                if (t.type == NONE) {
+                    t.type = UNKNOWN;
+                    t.lexeme += c;
+                } else if (t.type == IDENTIFIER) {
+                    t.lexeme += c;
+                } else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
+                } else {
+                    istream->putback(c);
+                    break;
+                }
+            } else if (isseparator(c)) {
                 if (t.type == NONE) {
                     t.type = SEPARATOR;
-                    
-                    // Accept
                     t.lexeme += c;
-                }
-                else {
+                } else {
                     istream->putback(c);
                     break;
                 }
-            }
-            else if (isoperator(c)) {
+            } else if (isoperator(c)) {
                 if (t.type == NONE) {
                     t.type = OPERATOR;
-                    
-                    // Accept
                     t.lexeme += c;
-                    
-                    if (c == '=') {
-                        if (istream->get(c) && c == '=') {
-                            // Equality operator ==
-                            t.lexeme += c;
-                        } else {
-                            istream->putback(c);
-                        }
-                    }
-                }
-                else {
+                } else if (c == '=' && t.lexeme == "=") {
+                    t.lexeme += c;
+                } else {
                     istream->putback(c);
                     break;
                 }
-            }
-            else if (isnumber(c)) {
+            } else if (isnumber(c)) {
                 if (t.type == NONE) {
                     t.type = INTEGER;
-                    
-                    // Accept
                     t.lexeme += c;
-                }
-                else if (t.type == IDENTIFIER) {
+                } else if (t.type == IDENTIFIER) {
                     t.type = UNKNOWN;
-                    
-                    // Accept
                     t.lexeme += c;
-                }
-                else if (t.type == INTEGER || t.type == UNKNOWN) {
-                    // Accept
+                } else if (t.type == INTEGER) {
                     t.lexeme += c;
-                }
-                else {
+                } else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
+                } else {
                     istream->putback(c);
                     break;
                 }
+            } else {
+                t.type = UNKNOWN;
+                t.lexeme += c;
+            }
+            
+            if (t.lexeme == "$$") {
+                t.type = KEYWORD;
+                break;
             }
         }
         
@@ -202,7 +178,7 @@ public:
     }
 };
 
-std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t) {
+std::ostream & operator<<(std::ostream &os, Lexer::OutputType t) {
     os << t.type << ": " << t.lexeme << std::endl;
     return os;
 }
@@ -222,6 +198,5 @@ std::ostream& operator<<(std::ostream& os, Lexer::Token &t)
     }
     return os;
 }
-
 
 #endif /* lexer_h */

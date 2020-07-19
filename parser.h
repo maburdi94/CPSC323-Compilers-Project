@@ -12,13 +12,12 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <vector>
-#include <functional>
+#include <set>
 #include "lexer.h"
 
 class Parser {
     
-    std::map<std::string, std::vector<std::string>> first = {
+    std::map<std::string, std::set<std::string>> first = {
         { "Rat20SU", { "$$" } },
         { "OptDeclList", { "integer", "boolean" } },
         { "DeclList", { "integer", "boolean" } },
@@ -40,75 +39,334 @@ class Parser {
     };
     
 public:
-    struct OutputType {};
     
     Lexer lexer;
-    Lexer::OutputType token;
+    Lexer::OutputType *token;
     
     Parser(std::istream &istream) : lexer(istream) {}
     Parser(Lexer &lexer) : lexer(lexer) {}
     
+    bool isidentifier(const std::string &s) {
+        if (!isalpha(s[0])) return false;   // 1st char must be letter
+        for (auto c : s.substr(1))          // all the rest...
+            if (!(isalpha(c) || c == '_'))  // ...must be either letter or _
+                return false;
+        return true;
+    }
+    
+    bool isinteger(const std::string &s) {
+        for (auto c : s) {
+            if (!isdigit(c))
+                return false;
+        }
+        return true;
+    }
+    
+    void Rat20SU() {
+        std::cout << lexer(); // $$
+            
+        std::cout << "$$ <Opt Declaration List>  <Statement List> $$" << std::endl;
+            
+        OptDeclList();
+        StatementList();
+
+        std::cout << *token; // $$
+    }
+    
+    
     void OptDeclList() {
-        token = lexer();
-        
-        std::cout << token;
-        
-        auto match = std::find(first["DeclList"].begin(), first["DeclList"].end(), token);
-        
-        if (match != first["DeclList"].end()) {
+        *token = lexer();
+        if (first["DeclList"].find(token->lexeme) != first["DeclList"].end()) {
+            
             std::cout << "<Opt Declaration List>  ->  <Declaration List>" << std::endl;
             
             DeclList();
         } else {
             std::cout << "<Opt Declaration List>  ->  <Empty>" << std::endl;
+            
+            Empty();
+        }
+        std::cout << std::endl;
+        
+        // token is the next token
+    }
+    
+    
+    void DeclList() {
+        std::cout << "<Declaration List>  ->  <Declaration> ; <Declaration List'>" << std::endl;
+        
+        Declaration();
+        
+        *token = lexer();
+        
+        DeclListP();
+        
+        // token is the next token
+    }
+    
+    void DeclListP() {
+        
+        if(first["DeclList"].find(token->lexeme) != first["DeclList"].end()) {
+            std::cout << "<Declaration List'>  ->  <Declaration List>" << std::endl;
+            DeclList();
+        } else {
+            std::cout << "<Declaration List'>  ->  <Empty>" << std::endl;
+            Empty();
         }
         
+        // token is the next token
+    }
+    
+    void Declaration() {
+        std::cout << "<Declaration>  ->  <Qualifier> <identifier>" << std::endl << std::endl;
+        
+        Qualifier();
+        
+        *token = lexer();
+        
+        Identifier();
+        
+        std::cout << lexer() << std::endl; // ;
+        
+        // token is NOT next token
+    }
+    
+    void Qualifier() {
+        // token already has value of qualifier
+        std::cout << "<Qualifier>" << std::endl;
+        std::cout << *token << std::endl;
+    }
+    
+    void Identifier() {
+        std::cout << "<Identifier>  " << std::endl;
+        std::cout << *token << std::endl;
     }
     
     void StatementList() {
+        std::cout << "<Statement List>  ->  <Statement> ; <Statement List'>" << std::endl;
         
+        Statement();
+        
+        *token = lexer();
+        
+        StatementListP();
+        
+        // token is the next token
     }
     
-    void Rat20SU() {
-        token = lexer();
+    void StatementListP() {
         
-        std::cout << token;
-        
-        if (token.lexeme == "$$") {
-            std::cout << "$$  <Opt Declaration List>    <Statement List> $$" << std::endl;
-            
-            OptDeclList();
+        if(first["StatementList"].find(token->lexeme) != first["StatementList"].end()
+           || isidentifier(token->lexeme)) {
+            std::cout << "<Statement List'>  ->  <Statement List>" << std::endl;
             StatementList();
         } else {
-            std::cout << "Error: Check syntax for missing $$.";
+            std::cout << "<Statement List'>  ->  <Empty>" << std::endl;
+            Empty();
         }
     }
-    void DeclList();
-    void Decl();
-    void Qualifier();
-    void Statement();
-    void Compound();
-    void Assign();
-    void If();
-    void Put();
-    void Get();
-    void While();
-    void Condition();
-    void Relop();
-    void Expression();
-    void Term();
-    void Factor();
-    void Primary();
     
-    OutputType operator()() {
-        OutputType t;
+    void Statement() {
+        if (token->lexeme == "{") {
+            std::cout << "<Statement>  ->  <Compound>" << std::endl;
+            Compound();
+        } else if (token->lexeme == "if") {
+            std::cout << "<Statement>  ->  <If>" << std::endl;
+            If();
+        } else if (token->lexeme == "put") {
+            std::cout << "<Statement>  ->  <Put>" << std::endl;
+            Put();
+        } else if (token->lexeme == "get") {
+            std::cout << "<Statement>  ->  <Get>" << std::endl;
+            Get();
+        } else if (token->lexeme == "while") {
+            std::cout << "<Statement>  ->  <While>" << std::endl;
+            While();
+        } else {
+            std::cout << "<Statement>  ->  <Assign>" << std::endl;
+            Assign();
+        }
         
-        // Find start of Rat20SU code
-        do token = lexer(); while (token.lexeme != "$$" && lexer);
-
+        // token is NOT next token
+    }
+    
+    void Compound() {
+        std::cout << "<Compound>  ->  {  <Statement List>  }" << std::endl << std::endl;
+        
+        std::cout << *token << std::endl; // {
+        
+        *token = lexer();
+        
+        StatementList();
+        
+        std::cout << *token << std::endl; // }
+        
+        // token is NOT next token
+    }
+    
+    void Assign() {
+        std::cout << "<Assign>  ->  <Identifier> = <Expression> ;" << std::endl;
+        
+        Identifier();
+        
+        std::cout << lexer() << std::endl; // =
+        
+        Expression();
+        
+        std::cout << *token << std::endl; // ;
+        
+        // token is NOT next token
+    }
+    void If() {
+        std::cout << "<If>  ->  if  ( <Condition>  ) <Statement> <Otherwise> fi" << std::endl;
+        
+        std::cout << *token << std::endl; // if
+        std::cout << lexer() <<std::endl; // (
+        
+        Condition();
+        
+        std::cout << *token << std::endl; // )
+        
+        *token = lexer();
+        
+        // token is next token
+        
+        Statement();
+        
+        *token = lexer();
+        
+        Otherwise();
+        
+        std::cout << *token <<std::endl; // fi
+    }
+    
+    void Otherwise() {
+        if (token->lexeme == "otherwise") {
+            std::cout << "<Otherwise>  ->  otherwise  <Statement>" << std::endl;
+            *token = lexer();
+            Statement();
+            *token = lexer();
+        } else {
+            std::cout << "<Otherwise>  ->  <Empty>" << std::endl;
+            Empty();
+        }
+    }
+    
+    void Put() {
+        std::cout << "put ( <identifier> );" << std::endl;
+    }
+    void Get() {
+        std::cout << "get ( <Identifier> );" << std::endl;
+    }
+    void While() {
+        std::cout << "while ( <Condition>  ) <Statement>" << std::endl;
+    }
+    void Condition() {
+        std::cout << "<Condition>  ->  <Expression> <Relop> <Expression>" << std::endl;
+        
+        Expression();
+        Relop();
+        Expression();
+        
+        // token is next token
+    }
+    
+    void Relop() {
+        std::cout << "<Relop>" << std::endl;
+        std::cout << *token << std::endl; // operator
+    }
+    
+    void Expression() {
+        std::cout << "<Expression>  ->  <Term><Expression'>" << std::endl;
+       
+        Term();
+        ExpressionP();
+        
+        // token is next token
+    }
+    
+    void ExpressionP() {
+        if (token->lexeme == "+") {
+            std::cout << "<Expression'>  ->  +<Term><Expression'>" << std::endl;
+            Term();
+            ExpressionP();
+        } else if (token->lexeme == "-") {
+            std::cout << "<Expression'>  ->  -<Term><Expression'>" << std::endl;
+            Term();
+            ExpressionP();
+        } else {
+            std::cout << "<Expression'>  ->  <Empty>" << std::endl;
+            Empty();
+        }
+    }
+    
+    void Term() {
+        std::cout << "<Term>  ->  <Factor><Term'>" << std::endl;
+        
+        Factor();
+        TermP();
+    }
+    
+    void TermP() {
+        if (token->lexeme == "*") {
+            std::cout << "<Term'>  ->  *<Factor><Term'>" << std::endl;
+            Factor();
+            TermP();
+        } else if (token->lexeme == "/") {
+            std::cout << "<Term'>  ->  /<Factor><Term'>" << std::endl;
+            Factor();
+            TermP();
+        } else {
+            std::cout << "<Term'>  ->  <Empty>" << std::endl;
+            Empty();
+        }
+    }
+    
+    void Factor() {
+        *token = lexer();
+        
+        if (token->lexeme == "-") {
+            std::cout << "<Factor>  ->  -<Primary>" << std::endl;
+            *token = lexer();
+            Primary();
+            
+        } else {
+            std::cout << "<Factor>  ->  <Primary>" << std::endl;
+            Primary();
+        }
+        
+        *token = lexer();
+    }
+    
+    void Primary() {
+        if (isidentifier(token->lexeme)) {
+            std::cout << "<Primary>  ->  <Identifier>" << std::endl;
+            Identifier();
+        } else if (isinteger(token->lexeme)) {
+            std::cout << "<Primary>  ->  <Integer>" << std::endl;
+            Integer();
+        } else if (token->lexeme == "true" || token->lexeme == "false") {
+            std::cout << "<Primary>" << std::endl;
+            std::cout << *token << std::endl;
+        } else if (token->lexeme == "(") {
+            Expression();
+            std::cout << lexer() << std::endl; // )
+        } else {
+            // ERROR
+        }
+    }
+    
+    void Integer() {
+        std::cout << "<Integer>  " << std::endl;
+        std::cout << *token << std::endl;
+    }
+    
+    void Empty() {
+        std::cout << "<Empty>  ->  ε" << std::endl;
+    }
+    
+    void operator()() {
         Rat20SU();
-        
-        return t;
     }
     
 };
