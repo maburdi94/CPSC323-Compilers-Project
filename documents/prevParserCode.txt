@@ -1,0 +1,138 @@
+// bool Rat20SU() {
+    //     token = lexer();
+    //     std::cout << token; // $$
+            
+    //     std::cout << "$$ <Opt Declaration List>  <Statement List> $$" << std::endl;
+            
+    //     OptDeclList();
+    //     StatementList();
+        
+    //     token = lexer();
+    //     std::cout << token; // $$
+    // }
+    
+    
+    // bool OptDeclList() {
+    //     if (std::find(first["DeclList"].begin(),first["DeclList"].end(), token.lexeme) != first["DeclList"].end()) {
+            
+    //         std::cout << "<Opt Declaration List>  ->  <Declaration List>" << std::endl;
+            
+    //         DeclList();
+    //     } else {
+    //         std::cout << "<Opt Declaration List>  ->  <Empty>" << std::endl;
+            
+    //         Empty();
+    //     }
+        
+    // }
+    
+    
+    // bool DeclList() {
+    //     /*
+    //         Push the routes on a stack because we don't know
+    //         which route until we get the next token.
+    //      */
+        
+    //     Declaration();
+        
+    //     std::cout << "<Declaration List>  ->  <Declaration> ;";
+        
+    //     token = lexer();
+    //     std::cout << token; // ;
+        
+    //     auto match = std::find(first["Declaration"].begin(), first["Declaration"].end(), token.lexeme);
+        
+    //     if (match != first["Declaration"].end()) {
+    //         std::cout << " <Declaration List>" << std::endl;
+            
+    //         DeclList();
+    //     }
+        
+    // }
+    
+    // void Declaration() {
+    //     token = lexer();
+    //     std::cout << token; // qualifier
+        
+    //     token = lexer();
+    //     std::cout << token; // identifier
+        
+    //     std::cout << "<Declaration>  ->  <Qualifier> <Identifier>" << std::endl;
+    // }
+    
+    // void Qualifier() {
+    //     std::cout << "<Qualifier>  ->  integer |  boolean" << std::endl;
+    // }
+    
+    // void StatementList() {
+    //     std::cout << "<StatementList>  ->  <Statement>   | <Statement> <Statement List>" << std::endl;
+    //     while (lexer && Statement());
+    // }
+    
+    // bool Statement() {
+    //     token = lexer();
+    //     std::cout << token;
+        
+    //     if (token.lexeme == "{") {
+    //         std::cout<< "<Statement>  ->  <Compound>" << std::endl;
+    //         Compound();
+    //     }
+    //     else if (token.lexeme == "if") If() {
+    //         std::cout<< "<Statement>  ->  <If>" << std::endl;
+    //         If();
+    //     }
+    //     else if (token.lexeme == "put") Put() {
+    //         std::cout<< "<Statement>  ->  <Put>" << std::endl;
+    //         Put();
+    //     }
+    //     else if (token.lexeme == "get") Get() {
+    //         std::cout<< "<Statement>  ->  <Get>" << std::endl;
+    //         Get();
+    //     }
+    //     else if (token.lexeme == "while") While() {
+    //         std::cout<< "<Statement>  ->  <While>" << std::endl;
+    //         While();
+    //     }
+    //     else if (isidentifier(token.lexeme)) Assign() {
+    //         std::cout<< "<Statement>  ->  <Assign>" << std::endl;
+    //         Assign();
+    //     }
+    //     else if (token.lexeme == "$$") return false;
+        
+    //     return true;
+    // }
+    
+    // void Compound() {
+    //     std::cout << "<Compound>  ->  {  <Statement List>  }" << std::endl;
+    //     Compound();
+    // }
+    // void Assign() {
+    //     std::cout << "<Assign>  ->  <Identifier> = <Expression> ;" << std::endl;
+    //     Assign();
+    // }
+    // void If() {
+    //     std::cout << "<If>  ->  if  ( <Condition>  ) <Statement> <Otherwise> fi" << std::endl;
+    //     If();
+    // }
+    // void Put() {
+    //     std::cout << "put ( <identifier> );" << std::endl;
+    // }
+    // void Get() {
+    //     std::cout << "get ( <Identifier> );" << std::endl;
+    // }
+    // void While() {
+    //     std::cout << "while ( <Condition>  ) <Statement>" << std::endl;
+    // }
+    // void Condition() {
+        
+    // }
+    // void Relop() {
+        
+    // }
+    // void Expression() {
+        
+    // }
+    // void Term() {}
+    // void Factor() {}
+    // void Primary() {}
+    // void Empty() {}
