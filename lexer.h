@@ -10,6 +10,7 @@
 #define lexer_h
 
 #include <iostream>
+#include <string>
 
 class Lexer {
     std::istream *istream;
@@ -34,6 +35,7 @@ public:
     struct OutputType {
         Token type = NONE;
         std::string lexeme;
+        int size = 0;
         
         friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t);
     };
@@ -75,6 +77,14 @@ public:
     operator bool() const {
         return istream->good();
     }
+
+    // when parser needs to backup a token because it's testing for the follow set,
+    // it will ask this function to backup the pointer to the previous token
+    void backUp(Lexer::OutputType token) {
+        for (int i = 0; i < token.size + 1; i++) {
+            istream->unget();
+        }
+    }
     
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
@@ -95,10 +105,12 @@ public:
             else if (c == '$') {
                 t.type = UNKNOWN;
                 t.lexeme += c;
+                t.size += 1;
                 
                 if (istream->get(c) && c == '$') {
                     t.type = KEYWORD;
                     t.lexeme += c;
+                    t.size += 1;
                 } else {
                     istream->putback(c);
                 }
@@ -115,12 +127,14 @@ public:
                     t.type = UNKNOWN;
                     
                     t.lexeme += c;
+                    t.size += 1;
                 }
             }
             else if (isalpha(c) || isunderscore(c)) {
                 if (t.type == IDENTIFIER || t.type == UNKNOWN) {
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                 }
                 else if (t.type == NONE) {
                     // Assume identifier
@@ -128,6 +142,7 @@ public:
                     
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                 }
                 else { // OPERATOR, SEPARATOR, INTEGER
                     istream->putback(c);
@@ -140,6 +155,7 @@ public:
                     
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                 }
                 else {
                     istream->putback(c);
@@ -152,11 +168,13 @@ public:
                     
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                     
                     if (c == '=') {
                         if (istream->get(c) && c == '=') {
                             // Equality operator ==
                             t.lexeme += c;
+                            t.size += 1;
                         } else {
                             istream->putback(c);
                         }
@@ -173,16 +191,19 @@ public:
                     
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                 }
                 else if (t.type == IDENTIFIER) {
                     t.type = UNKNOWN;
                     
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                 }
                 else if (t.type == INTEGER || t.type == UNKNOWN) {
                     // Accept
                     t.lexeme += c;
+                    t.size += 1;
                 }
                 else {
                     istream->putback(c);
