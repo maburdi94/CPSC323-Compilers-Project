@@ -41,9 +41,11 @@ public:
     };
 
     int lineNum;
+    Token currentType;
     
     Lexer(std::istream &is) : istream(&is) {
         lineNum = 0;
+        Token currentType = NONE;
     }
     
     bool isoperator(char &c) {
@@ -84,11 +86,32 @@ public:
 
     // when parser needs to backup a token because it's testing for the follow set,
     // it will ask this function to backup the pointer to the previous token
-    void backUp(Lexer::OutputType token) {
-        for (int i = 0; i < token.size + 1; i++) {
-            istream->unget();
-        }
-    }
+    // void backUp(Lexer::OutputType token) {
+    //     for (int i = 0; i < token.size + 1; i++) {
+    //         istream->unget();
+    //     }
+    // }
+
+
+    // Logic: 
+    // when the backUp() function is invoked, our file pointer is pointing at the
+    // end of the current token
+    // for example:
+    //      int i = 0;
+    //      ---------^
+    //      say that our pointer is at the ;
+    //      we will want to backup the pointer until it points to a new token
+    // another example:
+    //      adfkjdf          put      (     max );
+    //      in this example, our pointer could be pointing to put
+    //      then when we invoke backUp(), we will want our pointer to point at the
+    //      beginning of adfkjdf
+    // to do this we will need to keep a list of tokens that have been processed
+    // we will then refer to the list to see what the previous token is so that
+    // we can reposition our pointer to the beginning of the previous token
+    // void backUp() {
+
+    // }
     
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
