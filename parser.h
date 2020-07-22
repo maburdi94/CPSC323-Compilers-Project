@@ -43,7 +43,7 @@ public:
     Lexer lexer;
     Lexer::OutputType *token;
     
-    bool printProductionsUsed = false;
+    bool printProductionsUsed = true;
     
     Parser(std::istream &istream) : lexer(istream) {}
     Parser(Lexer &lexer) : lexer(lexer) {}
@@ -228,13 +228,17 @@ public:
     }
     
     void Assign() {
-       if (printProductionsUsed)  std::cout << "<Assign>  ->  <Identifier> = <Expression> ;" << std::endl;
+        if (printProductionsUsed) std::cout << "<Assign>  ->  <Identifier> = <Expression> ;" << std::endl;
         
-        *token = lexer();
+        Identifier();
         
-        DeclListP();
+        std::cout << lexer() << std::endl; // =
         
-        // token is the next token
+        Expression();
+        
+        std::cout << *token << std::endl; // ;
+        
+        // token is NOT next token
     }
     
     void Otherwise() {
