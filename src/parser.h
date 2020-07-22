@@ -339,7 +339,9 @@ public:
         // token = lexer();
         std::cout << "------Inside assign with token : " << token;
         if (token.type == Lexer::IDENTIFIER) {
+            std::cout << "IDENTIFIER test passed" << std::endl;
             token = lexer();
+            std::cout << "current token : " << token;
             if (token.lexeme == "=") {
                 if ( Expression() ) {
                     token = lexer();
