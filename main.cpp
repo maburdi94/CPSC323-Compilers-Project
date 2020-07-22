@@ -16,11 +16,11 @@ int main(int argc, const char * argv[]) {
 
     ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test1.rat");
 
-//    Lexer lexer(ifile);
-//    while (lexer) std::cout << lexer();
+    Lexer lexer(ifile);
+    while (lexer) std::cout << lexer();
     
-    Parser parser(ifile);
-    parser();
+//    Parser parser(ifile);
+//    parser();
     
     ifile.close();
 }

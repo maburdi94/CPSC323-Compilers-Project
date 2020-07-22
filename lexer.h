@@ -34,6 +34,7 @@ public:
     struct OutputType {
         Token type = NONE;
         std::string lexeme;
+        unsigned long line = 0;
         
         friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
@@ -75,6 +76,8 @@ public:
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
         
+        static unsigned long line = 1;
+        
         bool skip = false;
         for (char c = 0, b = c; istream->get(c); b = c) {
             
@@ -84,6 +87,9 @@ public:
             if (skip) continue;
             
             if (isspace(c)) {
+                
+                if (c == '\n') line++;
+                
                 if (t.type != NONE)
                     break;
             } else if (isalpha(c)) {
@@ -168,12 +174,14 @@ public:
             t.type = KEYWORD;
         }
         
+        t.line = line;
+        
         return t;
     }
 };
 
 std::ostream & operator<<(std::ostream &os, Lexer::OutputType t) {
-    os << t.type << ": " << t.lexeme << std::endl;
+    os << t.line << ":" << t.type << " " << t.lexeme << std::endl;
     return os;
 }
 
