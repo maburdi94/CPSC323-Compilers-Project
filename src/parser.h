@@ -648,12 +648,15 @@ public:
         follow = {*, /, e}
     */
     bool Primary () {
+        std::cout << "PRIMARY token : " << token;
         token = lexer();
+        std::cout << "PRIMARY token : " << token;
         if (token.type == Lexer::IDENTIFIER) {
             std::cout << "<Primary>               ::=  <Identifier>" << std::endl;
             return true;
         }
         else if (token.type == Lexer::INTEGER) {
+            std::cout << "PRIMARY test SUCCEEDED--------" << std::endl;
             std::cout << "<Primary>               ::=  <Integer>" << std::endl;
             return true;
         }
@@ -669,9 +672,9 @@ public:
         return false;
     }
 
-    // bool Empty () {
-    //     return false;
-    // }
+    bool Empty () {
+        return false;
+    }
     
     void operator()() {
         std::cout << "Starting to parse..." << std::endl;
