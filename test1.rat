@@ -1,7 +1,12 @@
 $$
-integer    ax12;
-boolean    b_dog;
+
 integer a;
+
+[* This is a comment *]
+
+integer    ax12;
+
+boolean    b_dog;
 
 b_dog = 32;
 
@@ -16,16 +21,16 @@ if (b_dog==12) {
 [* End comment *]
 
 [* Testing special symbols *]
-// /= += 
+[* ]// /= += *]
 
 a=89;
 
 
 [* Testing PROGRAM DECLARATION *]
-$$
+[* $$ *]
 
 [* Testing equality symbol *]
-==
+[* == *]
 
 [* Testing to see if compiler will handle no spaces correctly *]
-a=2+1;int67
+[* a=2+1;int67 *]

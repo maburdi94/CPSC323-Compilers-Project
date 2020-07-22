@@ -75,35 +75,25 @@ public:
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
         
-        char c;
         bool skip = false;
-        while (istream->get(c)) {
+        for (char c = 0, b = c; istream->get(c); b = c) {
             
-            if (c == ']' && t.lexeme == "*") {
-                skip = false;
-                t.lexeme = "";
-                continue;
-            }
+            skip = (!skip && (c == '*' && b == '['))
+            || (skip && !(c == ']' && b == '*'));
             
-            if (c == '*' && t.lexeme == "[") {
-                t.type = NONE;
-                skip = true;
-            }
-            
-            if (skip) {
-                t.lexeme = c;
-                continue;
-            }
+            if (skip) continue;
             
             if (isspace(c)) {
                 if (t.type != NONE)
                     break;
-                
             } else if (isalpha(c)) {
                 if (t.type == NONE) {
                     t.type = IDENTIFIER;
-                    t.lexeme += c;
+                    t.lexeme = c;
                 } else if (t.type == IDENTIFIER) {
+                    t.lexeme += c;
+                } else if (t.type == INTEGER) {
+                    t.type = UNKNOWN;
                     t.lexeme += c;
                 } else if (t.type == UNKNOWN) {
                     t.lexeme += c;
@@ -114,19 +104,17 @@ public:
             } else if (c == '_') {
                 if (t.type == NONE) {
                     t.type = UNKNOWN;
-                    t.lexeme += c;
+                    t.lexeme = c;
                 } else if (t.type == IDENTIFIER) {
                     t.lexeme += c;
-                } else if (t.type == UNKNOWN) {
-                    t.lexeme += c;
                 } else {
-                    istream->putback(c);
-                    break;
+                    t.type = UNKNOWN;
+                    t.lexeme += c;
                 }
             } else if (isseparator(c)) {
                 if (t.type == NONE) {
                     t.type = SEPARATOR;
-                    t.lexeme += c;
+                    t.lexeme = c;
                 } else {
                     istream->putback(c);
                     break;
@@ -134,7 +122,7 @@ public:
             } else if (isoperator(c)) {
                 if (t.type == NONE) {
                     t.type = OPERATOR;
-                    t.lexeme += c;
+                    t.lexeme = c;
                 } else if (c == '=' && t.lexeme == "=") {
                     t.lexeme += c;
                 } else {
@@ -144,7 +132,7 @@ public:
             } else if (isnumber(c)) {
                 if (t.type == NONE) {
                     t.type = INTEGER;
-                    t.lexeme += c;
+                    t.lexeme = c;
                 } else if (t.type == IDENTIFIER) {
                     t.type = UNKNOWN;
                     t.lexeme += c;
@@ -159,11 +147,17 @@ public:
             } else {
                 t.type = UNKNOWN;
                 t.lexeme += c;
-            }
-            
-            if (t.lexeme == "$$") {
-                t.type = KEYWORD;
-                break;
+                
+                if (t.lexeme == "$$") {
+                    t.type = KEYWORD;
+                    break;
+                }
+                
+                // Comment
+                if (t.lexeme == "[]") {
+                    t.type = NONE;
+                    t.lexeme = "";
+                }
             }
         }
         
