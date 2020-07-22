@@ -45,8 +45,10 @@ public:
     
     bool printProductionsUsed = true;
     
+    
     Parser(std::istream &istream) : lexer(istream) {}
     Parser(Lexer &lexer) : lexer(lexer) {}
+    
     
     bool isidentifier(const std::string &s) {
         if (!isalpha(s[0])) return false;   // 1st char must be letter
@@ -63,6 +65,7 @@ public:
         return true;
     }
     
+    
     void Rat20SU() {
         std::cout << lexer(); // $$
          
@@ -77,12 +80,16 @@ public:
     
     void OptDeclList() {
         *token = lexer();
+        
+        // Try to predict if there are any declarations
         if (first["DeclList"].find(token->lexeme) != first["DeclList"].end()) {
             
             if (printProductionsUsed) std::cout << "<Opt Declaration List>  ->  <Declaration List>" << std::endl;
             
             DeclList();
+            
         } else {
+            
             if (printProductionsUsed) std::cout << "<Opt Declaration List>  ->  <Empty>" << std::endl;
             
             Empty();
@@ -96,26 +103,32 @@ public:
         if (printProductionsUsed) std::cout << "<Declaration List>  ->  <Declaration> ; <Declaration List'>" << std::endl;
         
         Declaration();
-        
-        *token = lexer();
-        
         DeclListP();
         
         // token is the next token
     }
     
+    
     void DeclListP() {
+        *token = lexer();
         
         if(first["DeclList"].find(token->lexeme) != first["DeclList"].end()) {
+            
             if (printProductionsUsed) std::cout << "<Declaration List'>  ->  <Declaration List>" << std::endl;
+            
             DeclList();
+            
         } else {
+            
             if (printProductionsUsed) std::cout << "<Declaration List'>  ->  <Empty>" << std::endl;
+            
             Empty();
+            
         }
         
         // token is the next token
     }
+    
     
     void Declaration() {
         if (printProductionsUsed) std::cout << "<Declaration>  ->  <Qualifier> <identifier>" << std::endl;
@@ -131,16 +144,16 @@ public:
         // token is NOT next token
     }
     
+    
     void Qualifier() {
-        // token already has value of qualifier
-        if (printProductionsUsed) std::cout << "<Qualifier>" << std::endl;
-        std::cout << *token << std::endl;
+        if (printProductionsUsed) std::cout << "<Qualifier>  -> " << *token << std::endl;
     }
     
+    
     void Identifier() {
-        if (printProductionsUsed) std::cout << "<Identifier>  " << std::endl;
-        std::cout << *token << std::endl;
+        if (printProductionsUsed) std::cout << "<Identifier>  -> " << *token << std::endl;
     }
+    
     
     void StatementList() {
         if (printProductionsUsed) std::cout << "<Statement List>  ->  <Statement> ; <Statement List'>" << std::endl;
@@ -154,6 +167,7 @@ public:
         // token is the next token
     }
     
+    
     void StatementListP() {
         
         if(first["StatementList"].find(token->lexeme) != first["StatementList"].end()
@@ -165,6 +179,7 @@ public:
             Empty();
         }
     }
+    
     
     void Statement() {
         if (token->lexeme == "{") {
@@ -190,6 +205,7 @@ public:
         // token is NOT next token
     }
     
+    
     void Compound() {
         if (printProductionsUsed) std::cout << "<Compound>  ->  {  <Statement List>  }" << std::endl << std::endl;
         
@@ -203,6 +219,7 @@ public:
         
         // token is NOT next token
     }
+    
     
     void If() {
         if (printProductionsUsed) std::cout << "<If>  ->  if  ( <Condition>  ) <Statement> <Otherwise> fi" << std::endl;
@@ -227,6 +244,7 @@ public:
         std::cout << *token <<std::endl; // fi
     }
     
+    
     void Assign() {
         if (printProductionsUsed) std::cout << "<Assign>  ->  <Identifier> = <Expression> ;" << std::endl;
         
@@ -241,35 +259,73 @@ public:
         // token is NOT next token
     }
     
+    
     void Otherwise() {
         if (token->lexeme == "otherwise") {
             if (printProductionsUsed) std::cout << "<Otherwise>  ->  otherwise  <Statement>" << std::endl;
             
-            std::cout << *token << std::endl;
-            
-            *token = lexer(); // {
+            *token = lexer();
             
             Statement();
             
-            *token = lexer(); // }
+            *token = lexer(); // fi
             
-        } else {
+        } else { // token is fi
             if (printProductionsUsed) std::cout << "<Otherwise>  ->  <Empty>" << std::endl;
             Empty();
         }
     }
     
+    
     void Put() {
-        if (printProductionsUsed) std::cout << "put ( <identifier> );" << std::endl;
+        if (printProductionsUsed) std::cout << "<Put>  ->  put ( <identifier> );" << std::endl;
+        
+        std::cout << *token; // put
+        std::cout << lexer(); // (
+        
+        *token = lexer();
+        
+        Identifier();
+        
+        std::cout << lexer(); // )
+        std::cout << lexer(); // ;
+        
+        // token is NOT next token
     }
+    
     
     void Get() {
         if (printProductionsUsed) std::cout << "get ( <Identifier> );" << std::endl;
+        
+        std::cout << *token; // get
+        std::cout << lexer(); // (
+        
+        *token = lexer();
+        
+        Identifier();
+        
+        std::cout << lexer(); // )
+        std::cout << lexer(); // ;
+        
+        // token is NOT next token
     }
+    
     
     void While() {
         if (printProductionsUsed) std::cout << "while ( <Condition>  ) <Statement>" << std::endl;
+        
+        std::cout << *token; // while
+        std::cout << lexer(); // (
+        
+        Condition();
+        
+        std::cout << *token; // )
+        
+        Statement();
+        
+        // token is NOT next token
     }
+    
     
     void Condition() {
         if (printProductionsUsed) std::cout << "<Condition>  ->  <Expression> <Relop> <Expression>" << std::endl;
@@ -281,10 +337,11 @@ public:
         // token is next token
     }
     
+    
     void Relop() {
-        if (printProductionsUsed) std::cout << "<Relop>" << std::endl;
-        std::cout << *token << std::endl; // operator
+        if (printProductionsUsed) std::cout << "<Relop>  -> " << *token << std::endl;
     }
+    
     
     void Expression() {
         if (printProductionsUsed) std::cout << "<Expression>  ->  <Term><Expression'>" << std::endl;
@@ -295,20 +352,31 @@ public:
         // token is next token
     }
     
+    
     void ExpressionP() {
         if (token->lexeme == "+") {
+            
             if (printProductionsUsed) std::cout << "<Expression'>  ->  +<Term><Expression'>" << std::endl;
+            
             Term();
             ExpressionP();
+            
         } else if (token->lexeme == "-") {
+           
             if (printProductionsUsed) std::cout << "<Expression'>  ->  -<Term><Expression'>" << std::endl;
+           
             Term();
             ExpressionP();
+            
         } else {
+            
             if (printProductionsUsed) std::cout << "<Expression'>  ->  <Empty>" << std::endl;
+            
             Empty();
+            
         }
     }
+    
     
     void Term() {
         if (printProductionsUsed) std::cout << "<Term>  ->  <Factor><Term'>" << std::endl;
@@ -316,6 +384,7 @@ public:
         Factor();
         TermP();
     }
+    
     
     void TermP() {
         if (token->lexeme == "*") {
@@ -332,6 +401,7 @@ public:
         }
     }
     
+    
     void Factor() {
         *token = lexer();
         
@@ -347,6 +417,7 @@ public:
         
         *token = lexer();
     }
+    
     
     void Primary() {
         if (isidentifier(token->lexeme)) {
@@ -366,18 +437,21 @@ public:
         }
     }
     
+    
     void Integer() {
-        if (printProductionsUsed) std::cout << "<Integer>  " << std::endl;
-        std::cout << *token << std::endl;
+        if (printProductionsUsed) std::cout << "<Integer>  -> " << *token << std::endl;
     }
+    
     
     void Empty() {
         if (printProductionsUsed) std::cout << "<Empty>  ->  ε" << std::endl;
     }
     
+    
     void operator()() {
         Rat20SU();
     }
+    
     
 };
 
