@@ -566,7 +566,7 @@ public:
             }
         }
         else {
-            if (std::find(follow["ExpressionPrime"].begin(),follow["ExpressionPrime"].end(), token.lexeme) != follow["ExpressionPrime"].end()) {
+            if (follow["ExpressionPrime"].find(token.lexeme) != follow["ExpressionPrime"].end()) {
                 std::cout << "***********EXPRESSION PRIME PASS*************" << std::endl;
                 std::cout << "<Expression'>           ::=   <Empty>" << std::endl;
                 return true;
