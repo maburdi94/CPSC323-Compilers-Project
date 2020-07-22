@@ -10,7 +10,6 @@
 #define lexer_h
 
 #include <iostream>
-#include <string>
 
 class Lexer {
     std::istream *istream;
@@ -35,18 +34,12 @@ public:
     struct OutputType {
         Token type = NONE;
         std::string lexeme;
-        int size = 0;
+        unsigned long line = 0;
         
-        friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t);
+        friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
-
-    int lineNum;
-    Token currentType;
     
-    Lexer(std::istream &is) : istream(&is) {
-        lineNum = 0;
-        Token currentType = NONE;
-    }
+    Lexer(std::istream &is) : istream(&is) {}
     
     bool isoperator(char &c) {
         return c == '+' ||
@@ -66,10 +59,6 @@ public:
         c == ';';
     }
 
-    bool isunderscore(char &c) {
-        return c == '_';
-    }
-
     bool iskeyword(std::string &s) {
         size_t len = sizeof(keywords) / sizeof(keywords[0]);
         auto f = std::find(keywords, keywords + len, s);
@@ -83,161 +72,97 @@ public:
     operator bool() const {
         return istream->good();
     }
-
-    // when parser needs to backup a token because it's testing for the follow set,
-    // it will ask this function to backup the pointer to the previous token
-    // void backUp(Lexer::OutputType token) {
-    //     for (int i = 0; i < token.size + 1; i++) {
-    //         istream->unget();
-    //     }
-    // }
-
-
-    // Logic: 
-    // when the backUp() function is invoked, our file pointer is pointing at the
-    // end of the current token
-    // for example:
-    //      int i = 0;
-    //      ---------^
-    //      say that our pointer is at the ;
-    //      we will want to backup the pointer until it points to a new token
-    // another example:
-    //      adfkjdf          put      (     max );
-    //      in this example, our pointer could be pointing to put
-    //      then when we invoke backUp(), we will want our pointer to point at the
-    //      beginning of adfkjdf
-    // to do this we will need to keep a list of tokens that have been processed
-    // we will then refer to the list to see what the previous token is so that
-    // we can reposition our pointer to the beginning of the previous token
-    // void backUp() {
-
-    // }
     
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
         
-        char c;
-        while (istream->get(c)) {
+        static unsigned long line = 1;
+        
+        bool skip = false;
+        for (char c = 0, b = c; istream->get(c); b = c) {
+            
+            skip = (!skip && (c == '*' && b == '['))
+            || (skip && !(c == ']' && b == '*'));
+            
+            if (skip) continue;
             
             if (isspace(c)) {
-                if (c == '\n') {
-                    lineNum++;
-                }
-
-                // Discard space. Epsilon. No action taken.
                 
-                if (t.type != NONE) {
-                    // Terminating
+                if (c == '\n') line++;
+                
+                if (t.type != NONE)
                     break;
-                }
-                
-            }
-            else if (c == '$') {
-                t.type = UNKNOWN;
-                t.lexeme += c;
-                t.size += 1;
-                
-                if (istream->get(c) && c == '$') {
-                    t.type = KEYWORD;
+            } else if (isalpha(c)) {
+                if (t.type == NONE) {
+                    t.type = IDENTIFIER;
+                    t.lexeme = c;
+                } else if (t.type == IDENTIFIER) {
                     t.lexeme += c;
-                    t.size += 1;
+                } else if (t.type == INTEGER) {
+                    t.type = UNKNOWN;
+                    t.lexeme += c;
+                } else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
                 } else {
                     istream->putback(c);
+                    break;
                 }
-                
-                break;
-            }
-            else if (c == '[') {
-                if (istream->get(c) && c == '*') {
-                    // This is a comment
-                    for (char b=c; istream->get(c) && istream; b=c) {
-                        if (b=='*' && c==']') break;
-                    }
+            } else if (c == '_') {
+                if (t.type == NONE) {
+                    t.type = UNKNOWN;
+                    t.lexeme = c;
+                } else if (t.type == IDENTIFIER) {
+                    t.lexeme += c;
                 } else {
                     t.type = UNKNOWN;
-                    
                     t.lexeme += c;
-                    t.size += 1;
                 }
-            }
-            else if (isalpha(c) || isunderscore(c)) {
-                if (t.type == IDENTIFIER || t.type == UNKNOWN) {
-                    // Accept
-                    t.lexeme += c;
-                    t.size += 1;
-                }
-                else if (t.type == NONE) {
-                    // Assume identifier
-                    t.type = IDENTIFIER;
-                    
-                    // Accept
-                    t.lexeme += c;
-                    t.size += 1;
-                }
-                else { // OPERATOR, SEPARATOR, INTEGER
-                    istream->putback(c);
-                    break;
-                }
-            }
-            else if (isseparator(c)) {
+            } else if (isseparator(c)) {
                 if (t.type == NONE) {
                     t.type = SEPARATOR;
-                    
-                    // Accept
-                    t.lexeme += c;
-                    t.size += 1;
-                }
-                else {
+                    t.lexeme = c;
+                } else {
                     istream->putback(c);
                     break;
                 }
-            }
-            else if (isoperator(c)) {
+            } else if (isoperator(c)) {
                 if (t.type == NONE) {
                     t.type = OPERATOR;
-                    
-                    // Accept
+                    t.lexeme = c;
+                } else if (c == '=' && t.lexeme == "=") {
                     t.lexeme += c;
-                    t.size += 1;
-                    
-                    if (c == '=') {
-                        if (istream->get(c) && c == '=') {
-                            // Equality operator ==
-                            t.lexeme += c;
-                            t.size += 1;
-                        } else {
-                            istream->putback(c);
-                        }
-                    }
-                }
-                else {
+                } else {
                     istream->putback(c);
                     break;
                 }
-            }
-            else if (isnumber(c)) {
+            } else if (isnumber(c)) {
                 if (t.type == NONE) {
                     t.type = INTEGER;
-                    
-                    // Accept
-                    t.lexeme += c;
-                    t.size += 1;
-                }
-                else if (t.type == IDENTIFIER) {
+                    t.lexeme = c;
+                } else if (t.type == IDENTIFIER) {
                     t.type = UNKNOWN;
-                    
-                    // Accept
                     t.lexeme += c;
-                    t.size += 1;
-                }
-                else if (t.type == INTEGER || t.type == UNKNOWN) {
-                    // Accept
+                } else if (t.type == INTEGER) {
                     t.lexeme += c;
-                    t.size += 1;
-                }
-                else {
+                } else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
+                } else {
                     istream->putback(c);
                     break;
+                }
+            } else {
+                t.type = UNKNOWN;
+                t.lexeme += c;
+                
+                if (t.lexeme == "$$") {
+                    t.type = KEYWORD;
+                    break;
+                }
+                
+                // Comment
+                if (t.lexeme == "[]") {
+                    t.type = NONE;
+                    t.lexeme = "";
                 }
             }
         }
@@ -249,12 +174,14 @@ public:
             t.type = KEYWORD;
         }
         
+        t.line = line;
+        
         return t;
     }
 };
 
-std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t) {
-    os << t.type << ": " << t.lexeme << std::endl;
+std::ostream & operator<<(std::ostream &os, Lexer::OutputType t) {
+    os << t.line << ":" << t.type << " " << t.lexeme << std::endl;
     return os;
 }
 
@@ -273,6 +200,5 @@ std::ostream& operator<<(std::ostream& os, Lexer::Token &t)
     }
     return os;
 }
-
 
 #endif /* lexer_h */

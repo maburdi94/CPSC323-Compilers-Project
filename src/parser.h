@@ -344,6 +344,7 @@ public:
             std::cout << "current token : " << token;
             if (token.lexeme == "=") {
                 if ( Expression() ) {
+                    std::cout << "Expression passed" << std::endl;
                     token = lexer();
                     if (token.lexeme == ";") {
                         std::cout << "<Assign>    ::=  <Identifier> = <Expression> ;" << std::endl;
@@ -527,6 +528,7 @@ public:
     */
     bool Expression () {
         if ( Term() ) {
+            std::cout << "Term success " << std::endl;
             if ( ExpressionPrime() ) {
                 std::cout << "<Expression>    ::=  <Term><Expression'>" << std::endl;
                 return true;
@@ -574,6 +576,7 @@ public:
     */
     bool Term () {
         if ( Factor() ) {
+            std::cout << "Factor success" << std::endl;
             if ( TermPrime() ) {
                 std::cout << "<Term>         ::=  <Factor><Term'>" << std::endl;
                 return true;
@@ -588,7 +591,9 @@ public:
         follow = {+, -, e}
     */
     bool TermPrime () {
-        // token = lexer();
+        token = lexer();
+        std::cout << "Token inside of TermPrime : " << token;
+        
         if (token.lexeme == "*") {
             if ( Factor() ) {
                 if ( TermPrime() ) {
@@ -619,23 +624,22 @@ public:
         first = {-, <identifier>, <integer>, (, true, false}
         follow = {*, /, e}
     */
-    bool Factor () {
-        token = lexer();
-        if (token.lexeme == "-") {
-            if ( Primary() ) {
-                std::cout << "<Factor>     ::=  -<Primary>" << std::endl;
-                return true;
-            }
-        }
-        else { 
-            // lexer.backUp();        // we need to back up because we assumed the production rule started off
-            if ( Primary() ) {          // with a negative value in the first if-statement
-                std::cout << "<Factor>     ::=  <Primary>" << std::endl;
-                return true;
-            }
-        }
-        return false;
-    }
+   bool Factor () {
+       if ( Primary() ) {
+           std::cout << "<Factor>  ::=   <Primary>" << std::endl;
+           return true;
+       }
+       else {
+           token = lexer();
+           if (token.lexeme == "-") {
+               if ( Primary() ) {
+                   std::cout << "<Factor>  ::=   -<Primary>" << std::endl;
+                   return true;
+               }
+           }
+       }
+       return false;
+   }
 
     /*
     R19    <Primary>               ::=  <Identifier>  |  <Integer>  |  ( <Expression> )  |  true  |  false
