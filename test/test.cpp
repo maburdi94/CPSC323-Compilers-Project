@@ -1,3 +1,10 @@
+#include <map>
+#include <iostream>
+#include <set>
+#include <string>
+
+
+
 std::map<std::string, std::set<std::string> > follow = {
         { "Rat20SU", { "$" } },
         { "OptDeclList", { "{", /* id */ "if", "put", "get", "while" } },
@@ -24,5 +31,16 @@ std::map<std::string, std::set<std::string> > follow = {
         { "Primary", { "*", "/", "+", "-", /* id */ /* int */ "true", "false", "(", ")", ";" } },
         { "Empty", { "{", /* id */ /* int */ "if", "put", "get", "while", "fi", "+", "-", "true", "false",
                 "(", ")", ";" } }
+    };
 
-if (first["DeclList"].find(token->lexeme) != first["DeclList"].end()) {
+
+int main() {
+    if (follow["DeclList"].find("{") != follow["DeclList"].end()) {
+        std::cout << "REturn true" << std::endl;
+    }
+
+    std::cout << "Hello" << std::endl;
+    std::cout << "World" << std::endl;
+    return 0;
+}
+

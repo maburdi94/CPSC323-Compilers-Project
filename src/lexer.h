@@ -72,6 +72,10 @@ public:
     operator bool() const {
         return istream->good();
     }
+
+    void backUp() {
+        
+    }
     
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
