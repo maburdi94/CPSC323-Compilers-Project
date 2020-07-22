@@ -116,8 +116,13 @@ public:
 
         if (token.lexeme == "$$") {
             if ( OptDeclList() ) {
+                std::cout << "*******OPT DECL LIST PASS*******" << std::endl;
                 if ( StatementList() ) {
+                    std::cout << "*******STATEMENT LIST PASS*******" << std::endl;
+                    // token = lexer();
+                    std::cout << token;
                     if (token.lexeme == "$$") {
+                        std::cout << "*******RAT20SU*******" << std::endl;
                         std::cout << "<Rat20SU>   ::=  $$  <Opt Declaration List>    <Statement List> $$" << std::endl;
                         return true;
                     }
@@ -344,8 +349,8 @@ public:
             std::cout << "current token : " << token;
             if (token.lexeme == "=") {
                 if ( Expression() ) {
-                    std::cout << "Expression passed" << std::endl;
-                    token = lexer();
+                    std::cout << "*******Expression passed*********" << std::endl;
+                    // token = lexer();
                     if (token.lexeme == ";") {
                         std::cout << "<Assign>    ::=  <Identifier> = <Expression> ;" << std::endl;
                         return true;
@@ -562,10 +567,15 @@ public:
         }
         else {
             if (std::find(follow["ExpressionPrime"].begin(),follow["ExpressionPrime"].end(), token.lexeme) != follow["ExpressionPrime"].end()) {
+                std::cout << "***********EXPRESSION PRIME PASS*************" << std::endl;
                 std::cout << "<Expression'>           ::=   <Empty>" << std::endl;
                 return true;
             }
         }
+        // if (token.lexeme == ";") {
+        //     std::cout << "***********EXPRESSION PRIME PASS*************" << std::endl;
+        //     return true;
+        // }
         return false;
     }
 
@@ -578,6 +588,7 @@ public:
         if ( Factor() ) {
             std::cout << "Factor success" << std::endl;
             if ( TermPrime() ) {
+                std::cout << "*******Term passed*********" << std::endl;
                 std::cout << "<Term>         ::=  <Factor><Term'>" << std::endl;
                 return true;
             }
@@ -611,11 +622,13 @@ public:
                 }
             }
         }
+        else if (token.lexeme == "+" || token.lexeme == "-") {
+            std::cout << "<Term'>       ::=  <Empty>" << std::endl;
+            return true;
+        }
         else {
-            if (token.lexeme == "+" || token.lexeme == "-") {
-                std::cout << "<Term'>       ::=  <Empty>" << std::endl;
-                return true;
-            }
+            Empty();
+            return true;
         }
         return false;
     }
@@ -657,7 +670,7 @@ public:
         }
         else if (token.type == Lexer::INTEGER) {
             std::cout << "PRIMARY test SUCCEEDED--------" << std::endl;
-            std::cout << "<Primary>               ::=  <Integer>" << std::endl;
+            std::cout << "<Primary>      ::=  <Integer>" << std::endl;
             return true;
         }
         else if (token.lexeme == "(") {
@@ -672,8 +685,17 @@ public:
         return false;
     }
 
+    /*
+    R20    <Empty>                 ::=  ε
+        first = {e}
+        follow = {==, <, >, e}
+    */
     bool Empty () {
-        return false;
+        std::cout << "*****TOKEN INSIDE OF EMPTY" << token;
+        // if (std::find(follow["Empty"].begin(),follow["Empty"].end(), token.lexeme) != follow["Empty"].end()) {
+        //     // std::cout << 
+        // }
+        return true;
     }
     
     void operator()() {
