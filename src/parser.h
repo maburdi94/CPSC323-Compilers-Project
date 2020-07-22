@@ -333,15 +333,7 @@ public:
         follow = { {, }, $$, <identifier>, if, put, get, while, otherwise, fi, e}
     */
 
-   // sum = 0;
     bool Assign () {
-        // std::cout << "------Before calling lexer() : " << token;
-        // token = lexer();
-        // std::cout << "------Inside assign with token : " << token;
-        // lexer.backUp();
-        // lexer.backUp();
-        // lexer.backUp();
-        // token = lexer();
         std::cout << "------Inside assign with token : " << token;
         if (token.type == Lexer::IDENTIFIER) {
             std::cout << "IDENTIFIER test passed" << std::endl;
@@ -349,13 +341,20 @@ public:
             std::cout << "current token : " << token;
             if (token.lexeme == "=") {
                 if ( Expression() ) {
-                    std::cout << "*******Expression passed*********" << std::endl;
+                    std::cout << "*******Expression passed********* with token : " << token << std::endl;
                     // token = lexer();
                     if (token.lexeme == ";") {
+                        // std::cout << 
                         std::cout << "<Assign>    ::=  <Identifier> = <Expression> ;" << std::endl;
                         return true;
                     }
                 }
+            }
+        }
+        else {
+            if (std::find(follow["Assign"].begin(),follow["Assign"].end(), token.lexeme) != follow["Assign"].end()) {
+                std::cout << "<Assign>                ::=  <Identifier> = <Expression> ;" << std::endl;
+                return true;
             }
         }
         return false;
@@ -442,8 +441,10 @@ public:
         follow = { {, }, $$, <identifier>, if, put, get, while, otherwise, fi, e}
     */
     bool Get () {
+        std::cout << "GET TOKEN: " << token;
         token = lexer();
-        if (token.lexeme == "put") {
+        std::cout << "GET TOKEN after lexer(): " << token;
+        if (token.lexeme == "get") {
             token = lexer();
             if (token.lexeme == "(") {
                 token = lexer();
@@ -452,6 +453,7 @@ public:
                     if (token.lexeme == ")") {
                         token = lexer();
                         if (token.lexeme == ";") {
+                            std::cout << "*********GET SUCCESS**********" << std::endl;
                             std::cout << "<Get>     ::=  get ( <identifier> );" << std::endl;
                             return true;
                         }
@@ -566,7 +568,7 @@ public:
             }
         }
         else {
-            if (follow["ExpressionPrime"].find(token.lexeme) != follow["ExpressionPrime"].end()) {
+            if (std::find(follow["Expression Prime"].begin(),follow["Expression Prime"].end(), token.lexeme) != follow["Expression Prime"].end()) {
                 std::cout << "***********EXPRESSION PRIME PASS*************" << std::endl;
                 std::cout << "<Expression'>           ::=   <Empty>" << std::endl;
                 return true;
