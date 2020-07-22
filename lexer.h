@@ -67,8 +67,8 @@ public:
     
     friend std::ostream& operator<<(std::ostream& os, Token &t);
     
-    /* Allows the use of Lexer object in a conditional statement
-     to test if it has finished analyzing the input. */
+    // Evaluate lexer in bool expression.
+    // (true - stream not done)
     operator bool() const {
         return istream->good();
     }
@@ -76,90 +76,152 @@ public:
     Lexer::OutputType operator()() {
         Lexer::OutputType t;
         
+        // Keep track of the line numbers.
+        // Increment for every \n character read.
         static unsigned long line = 1;
         
+        // We need this to skip things like comments.
         bool skip = false;
+        
+        
+        // Iterate char-by-char and remember last char.
         for (char c = 0, b = c; istream->get(c); b = c) {
             
+            
+            // Skip if this char and last char [* (comment)
+            // Don't skip if this char and last char *]. (end of comment)
             skip = (!skip && (c == '*' && b == '['))
             || (skip && !(c == ']' && b == '*'));
             
+            
+            // If skip, loop (or EOF kills loop).
+            // Only encounter *] will reset skip.
             if (skip) continue;
             
+            // Check if c is space char
             if (isspace(c)) {
                 
+                // Increment line on \n char
                 if (c == '\n') line++;
                 
+                // Terminate all other states on space
                 if (t.type != NONE)
                     break;
-            } else if (isalpha(c)) {
+            }
+            // Check if c is letter
+            else if (isalpha(c)) {
+                // State is NONE. Go to IDENTIFIER
                 if (t.type == NONE) {
                     t.type = IDENTIFIER;
                     t.lexeme = c;
-                } else if (t.type == IDENTIFIER) {
+                }
+                // State is IDENTIFIER. Go to IDENTIFIER
+                else if (t.type == IDENTIFIER) {
                     t.lexeme += c;
-                } else if (t.type == INTEGER) {
+                }
+                // State is INTEGER. Go to UNKNOWN
+                else if (t.type == INTEGER) {
                     t.type = UNKNOWN;
                     t.lexeme += c;
-                } else if (t.type == UNKNOWN) {
+                }
+                // State is UNKNOWN. Go to UNKNOWN
+                else if (t.type == UNKNOWN) {
                     t.lexeme += c;
-                } else {
+                }
+                // Terminate for all other states.
+                else {
                     istream->putback(c);
                     break;
                 }
-            } else if (c == '_') {
+            }
+            // Check if c is a underscore
+            else if (c == '_') {
+                // State is NONE. Go to UNKNOWN
                 if (t.type == NONE) {
                     t.type = UNKNOWN;
                     t.lexeme = c;
-                } else if (t.type == IDENTIFIER) {
+                }
+                // State is IDENTIFIER. Go to IDENTIFIER
+                else if (t.type == IDENTIFIER) {
                     t.lexeme += c;
-                } else {
+                }
+                // All other states go to UNKNOWN
+                else {
                     t.type = UNKNOWN;
                     t.lexeme += c;
                 }
-            } else if (isseparator(c)) {
+            }
+            // Check if c is a separator
+            else if (isseparator(c)) {
+                // State is NONE. Go to SEPARATOR
                 if (t.type == NONE) {
                     t.type = SEPARATOR;
                     t.lexeme = c;
-                } else {
+                }
+                // Terminate for all other states.
+                else {
                     istream->putback(c);
                     break;
                 }
-            } else if (isoperator(c)) {
+            }
+            // Check if c is a operator
+            else if (isoperator(c)) {
+                // State is NONE. Go to OPERATOR
                 if (t.type == NONE) {
                     t.type = OPERATOR;
                     t.lexeme = c;
-                } else if (c == '=' && t.lexeme == "=") {
+                }
+                // "Special" operator ==
+                else if (c == '=' && t.lexeme == "=") {
                     t.lexeme += c;
-                } else {
+                }
+                // Terminate for all other states.
+                else {
                     istream->putback(c);
                     break;
                 }
-            } else if (isnumber(c)) {
+            }
+            // Check if c is a digit
+            else if (isnumber(c)) {
+                
+                // State is NONE. Go to INTEGER
                 if (t.type == NONE) {
                     t.type = INTEGER;
                     t.lexeme = c;
-                } else if (t.type == IDENTIFIER) {
+                }
+                // State is IDENTIFIER. Go to UNKNOWN
+                else if (t.type == IDENTIFIER) {
                     t.type = UNKNOWN;
                     t.lexeme += c;
-                } else if (t.type == INTEGER) {
+                }
+                // State is INTEGER. Go to INTEGER
+                else if (t.type == INTEGER) {
                     t.lexeme += c;
-                } else if (t.type == UNKNOWN) {
+                }
+                // State is UNKNOWN. Go to UNKNOWN
+                else if (t.type == UNKNOWN) {
                     t.lexeme += c;
-                } else {
+                }
+                // Terminate for all other states.
+                else {
                     istream->putback(c);
                     break;
                 }
-            } else {
+            }
+            // c is none of the above
+            else {
+                
+                // UNKNOWN token
                 t.type = UNKNOWN;
                 t.lexeme += c;
                 
+                // "Special" UNKNOWN token is KEYWORD
                 if (t.lexeme == "$$") {
                     t.type = KEYWORD;
                     break;
                 }
                 
-                // Comment
+                // Don't return comments. Reset.
                 if (t.lexeme == "[]") {
                     t.type = NONE;
                     t.lexeme = "";
@@ -168,12 +230,12 @@ public:
         }
         
         
-        // We assumed keyword, but now we check.
-        // If not keyword, must be identifier.
+        // We assumed IDENTIFIER. Check if it is KEYWORD
         if (t.type == IDENTIFIER && iskeyword(t.lexeme)) {
             t.type = KEYWORD;
         }
         
+        // Line number where token found.
         t.line = line;
         
         return t;
