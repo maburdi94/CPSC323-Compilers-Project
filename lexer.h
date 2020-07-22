@@ -1,20 +1,14 @@
-//
-//  lexer.h
-//  Assignment 1
-//
-//  Created by Michael Burdi on 7/16/20.
-//  Copyright © 2020 Michael Burdi. All rights reserved.
-//
 
 #ifndef lexer_h
 #define lexer_h
 
 #include <iostream>
+#include <unordered_set>
 
 class Lexer {
     std::istream *istream;
     
-    const std::string keywords[10] = {
+    const std::unordered_set<std::string> keywords = {
         "while",
         "if",
         "fi",
@@ -27,6 +21,9 @@ class Lexer {
         "boolean"
     };
     
+    // Keep track of the line number.
+    unsigned long current_line = 1;
+    
 public:
     
     enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
@@ -35,7 +32,7 @@ public:
         Token type = NONE;
         std::string lexeme;
         unsigned long line = 0;
-        
+
         friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
     
@@ -60,9 +57,7 @@ public:
     }
 
     bool iskeyword(std::string &s) {
-        size_t len = sizeof(keywords) / sizeof(keywords[0]);
-        auto f = std::find(keywords, keywords + len, s);
-        return f != (keywords + len);
+        return keywords.find(s) != keywords.end();
     }
     
     friend std::ostream& operator<<(std::ostream& os, Token &t);
@@ -73,12 +68,27 @@ public:
         return istream->good();
     }
     
-    Lexer::OutputType operator()() {
-        Lexer::OutputType t;
+    std::string getline() {
+        std::streampos pos = istream->tellg();
+        istream->seekg (0, istream->beg);
         
-        // Keep track of the line numbers.
-        // Increment for every \n character read.
-        static unsigned long line = 1;
+        unsigned long i = current_line;
+        std::string line;
+        
+        while (i--) std::getline(*istream, line);
+        
+        istream->seekg(pos, istream->beg);
+        
+        return line;
+    }
+    
+    OutputType &operator()(OutputType *token) {
+        *token = this->operator()();
+        return *token;
+    }
+    
+    OutputType operator()() {
+        Lexer::OutputType t;
         
         // We need this to skip things like comments.
         bool skip = false;
@@ -102,7 +112,7 @@ public:
             if (isspace(c)) {
                 
                 // Increment line on \n char
-                if (c == '\n') line++;
+                if (c == '\n') current_line++;
                 
                 // Terminate all other states on space
                 if (t.type != NONE)
@@ -236,14 +246,14 @@ public:
         }
         
         // Line number where token found.
-        t.line = line;
+        t.line = current_line;
         
         return t;
     }
 };
 
 std::ostream & operator<<(std::ostream &os, Lexer::OutputType t) {
-    os << t.line << ":" << t.type << " " << t.lexeme << std::endl;
+    os << t.type << " " << t.lexeme << std::endl;
     return os;
 }
 

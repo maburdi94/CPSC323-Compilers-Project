@@ -4,7 +4,7 @@ integer a;
 
 [* This is a comment *]
 
-integer    ax12;
+integer    ax;
 
 boolean    b_dog;
 
@@ -13,9 +13,9 @@ b_dog = 32;
 [* This is a comment *]
 
 if (b_dog==12) {
-    ax12 = 54;
+    ax = 54;
 } otherwise {
-    ax12 = 55;
+    ax = 55;
 } fi
 
 [* End comment *]
