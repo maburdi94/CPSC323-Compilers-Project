@@ -1,3 +1,23 @@
+/* 
+    bool Rat20SU() {
+        // inside of all the nested if statements
+
+                    // token = lexer();
+                    // if (token.lexeme == "$$") {
+                    //     std::cout << "<Rat20SU>   ::=  $$  <Opt Declaration List>    <Statement List> $$" << std::endl;
+                    //     return true;
+                    // }
+
+        // outside of all the if statements
+
+        else if (token.lexeme == "$") {
+            lexer.backUp(token);
+            return true;
+        }
+    }
+*/
+
+
 // bool Rat20SU() {
     //     token = lexer();
     //     std::cout << token; // $$

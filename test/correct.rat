@@ -1,0 +1,10 @@
+$$
+
+integer i ;
+integer max ;
+integer sum ;
+
+sum = 0 ;
+i = 1 ;
+get ( max ) ;
+$$
