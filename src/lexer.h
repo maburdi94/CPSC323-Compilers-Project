@@ -39,8 +39,12 @@ public:
         
         friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType &t);
     };
+
+    int lineNum;
     
-    Lexer(std::istream &is) : istream(&is) {}
+    Lexer(std::istream &is) : istream(&is) {
+        lineNum = 0;
+    }
     
     bool isoperator(char &c) {
         return c == '+' ||
@@ -93,7 +97,10 @@ public:
         while (istream->get(c)) {
             
             if (isspace(c)) {
-                
+                if (c == '\n') {
+                    lineNum++;
+                }
+
                 // Discard space. Epsilon. No action taken.
                 
                 if (t.type != NONE) {

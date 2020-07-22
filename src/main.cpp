@@ -14,30 +14,43 @@ int main(int argc, const char * argv[]) {
 //    std::getline(std::cin, filename);
 //    ifile.open(filename);
     
-    ifile.open("/Users/naoki_atkins/Documents/Code/CPSC323-Compilers-Project/test/test1.rat");
+    ifile.open("/Users/naoki_atkins/Documents/Code/CPSC323-Compilers-Project/test/correct.rat");
 
-    // Parser parser(ifile);
+    Parser parser(ifile);
 
-    Lexer lexer(ifile);
+    // Lexer lexer(ifile);
 
-    Lexer::OutputType token1 = lexer();
-    std::cout << token1 << std::endl;
-    Lexer::OutputType token2 = lexer();
-    std::cout << token2 << std::endl;
+    // Lexer::OutputType token1 = lexer();
+    // std::cout << token1 << std::endl;
+    // Lexer::OutputType token2 = lexer();
+    // std::cout << token2 << std::endl;
+    // Lexer::OutputType token3 = lexer();
+    // std::cout << token3 << std::endl;
+    // Lexer::OutputType token4 = lexer();
+    // std::cout << token4 << std::endl;
 
-    lexer.backUp(token2);
-    Lexer::OutputType token3 = lexer();
-    std::cout << token3 << std::endl;
+    // lexer.backUp(token2);
+
+    // Lexer::OutputType token5 = lexer();
+    // std::cout << token5 << std::endl;
+
+    // lexer.backUp(token1);
+
+    // Lexer::OutputType token6 = lexer();
+    // std::cout << token6 << std::endl;
 
     // while (!ifile.eof()) {
     //     Lexer::OutputType token = lexer();
-    //     std::cout << token << std::endl;
+    //     std::cout << "Token : " << token;
+    //     std::cout << "Line number : " << lexer.lineNum << "\n\n";
     // }
 
-    
-    // parser();
+    // Lexer ErrorOutput();
 
-    std::cout << "Hello world" << std::endl;
+    
+    parser();
+
+    // std::cout << "Hello world" << std::endl;
     
     ifile.close();
 }
