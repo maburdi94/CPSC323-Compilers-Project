@@ -591,6 +591,7 @@ public:
         follow = {+, -, e}
     */
     bool TermPrime () {
+        std::cout << "Token before inside of TermPrime : " << token;
         token = lexer();
         std::cout << "Token inside of TermPrime : " << token;
         
@@ -611,7 +612,7 @@ public:
             }
         }
         else {
-            if (std::find(follow["TermPrime"].begin(),follow["TermPrime"].end(), token.lexeme) != follow["TermPrime"].end()) {
+            if (token.lexeme == "+" || token.lexeme == "-") {
                 std::cout << "<Term'>       ::=  <Empty>" << std::endl;
                 return true;
             }
