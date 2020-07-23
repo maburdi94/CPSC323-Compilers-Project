@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdio>
 #include "lexer.h"
 #include "parser.h"
 
@@ -16,9 +17,9 @@ int main(int argc, const char * argv[]) {
     
     ifile.open("/Users/naoki_atkins/Documents/Code/CPSC323-Compilers-Project/test/correct.rat");
 
-    Parser parser(ifile);
+    // Parser parser(ifile);
 
-    // Lexer lexer(ifile);
+    Lexer lexer(ifile);
 
     // Lexer::OutputType token1 = lexer();
     // std::cout << token1 << std::endl;
@@ -39,16 +40,18 @@ int main(int argc, const char * argv[]) {
     // Lexer::OutputType token6 = lexer();
     // std::cout << token6 << std::endl;
 
-    // while (!ifile.eof()) {
-    //     Lexer::OutputType token = lexer();
-    //     std::cout << "Token : " << token;
-    //     std::cout << "Line number : " << lexer.lineNum << "\n\n";
-    // }
+
+    while (!ifile.eof()) {
+        Lexer::OutputType token = lexer();
+        std::cout << "Token : " << token;
+        // std::cout << "Line number : " << lexer.lineNum << "\n\n";
+        std::cout << ifile.tellg() << std::endl;
+    }
 
     // Lexer ErrorOutput();
 
     
-    parser();
+    // parser();
 
     // std::cout << "Hello world" << std::endl;
     

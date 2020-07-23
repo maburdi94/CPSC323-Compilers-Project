@@ -35,9 +35,13 @@ public:
         Token type = NONE;
         std::string lexeme;
         unsigned long line = 0;
+        int posNum;
+        OutputType* next;
         
         friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
+
+    
     
     Lexer(std::istream &is) : istream(&is) {}
     
@@ -73,8 +77,9 @@ public:
         return istream->good();
     }
 
+
     void backUp() {
-        
+
     }
     
     Lexer::OutputType operator()() {

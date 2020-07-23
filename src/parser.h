@@ -31,6 +31,7 @@ class Parser {
         { "Declaration", { "integer", "boolean" }},
         { "Qualifier", { "integer", "boolean" }},
         { "StatementList", { "{", "if", "put", "get", "while" /* id */ }},
+        { "StatementListPrime", { "{", /* id */ "if", "put", "get", "while"} }, 
         { "Statement", { "{", "if", "put", "get", "while" /* id */ }},
         { "Compound", { "{" }},
         { "Assign", { /* id */ }},
@@ -83,6 +84,7 @@ public:
     
     Lexer lexer;
     Lexer::OutputType token;
+    Lexer::OutputType prev_token;
     // std::stack<std::string> path;
 
     // enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
@@ -120,7 +122,6 @@ public:
                 if ( StatementList() ) {
                     std::cout << "*******STATEMENT LIST PASS*******" << std::endl;
                     // token = lexer();
-                    std::cout << token;
                     if (token.lexeme == "$$") {
                         std::cout << "*******RAT20SU*******" << std::endl;
                         std::cout << "<Rat20SU>   ::=  $$  <Opt Declaration List>    <Statement List> $$" << std::endl;
@@ -185,15 +186,7 @@ public:
             return true;
         }
         else {
-            // token = lexer();
-            // if (std::find(follow["DeclListPrime"].begin(),follow["DeclListPrime"].end(), token.lexeme) != follow["DeclListPrime"].end()) {
-            //     std::cout << "DeclListPrime success" << std::endl;
-            //     std::cout << "<Declaration List Prime>     ::=   <Empty>" << std::endl;
-            //     return true;
-            // }
-            
-
-            if (token.lexeme == "if" || token.lexeme == "put" || token.lexeme == "get" || token.lexeme == "while") {
+            if (token.lexeme == "if" || token.lexeme == "put" || token.lexeme == "get" || token.lexeme == "while" || token.lexeme == "{") {
                 std::cout << "<Declaration List Prime>     ::=   <Empty>" << std::endl;
                 return true;
             }
@@ -259,9 +252,11 @@ public:
         follow = {$$, } }
     */
     bool StatementListPrime () {
-        if ( Statement() ) {
-            std::cout << "<Statement List Prime>    ::=  <Statement>" << std::endl;
-            return true;
+        if(first["StatementListPrime"].find(token.lexeme) != first["StatementListPrime"].end()) {
+            if ( Statement() ) {
+                std::cout << "<Statement List Prime>    ::=  <Statement>" << std::endl;
+                return true;
+            }
         }
         else {
             // token = lexer();
@@ -279,32 +274,43 @@ public:
         follow = { {, }, $$, <identifier>, if, put, get, while, otherwise, fi, e}
     */
     bool Statement () {
-        std::cout << "------Inside statement with token : " << token;
-        if ( Assign() ) {
-            std::cout << "Assign was true" << std::endl;
-            std::cout << "<Statement>   ::=  <Assign>" << std::endl;
-            return true;
+        if (token.type == Lexer::IDENTIFIER) {
+            if ( Assign() ) {
+                std::cout << "<Statement>   ::=  <Assign>" << std::endl;
+                return true;
+            }
         }
-        else if ( If() ) {
-            std::cout << "<Statement>   ::=  <If>" << std::endl;
-            return true;
+        else if (token.lexeme == "if") {
+            if ( If() ) {
+                std::cout << "<Statement>   ::=  <If>" << std::endl;
+                return true;
+            }
         }
-        else if ( Put() ) {
-            std::cout << "<Statement>   ::=  <Put>" << std::endl;
-            return true;
-        }
-        else if ( Get() ) {
-            std::cout << "<Statement>   ::=  <Get>" << std::endl;
-            return true;
-        }
-        else if ( While() ) {
-            std::cout << "<Statement>   ::=  <While>" << std::endl;
-            return true;
-        }
-        else if ( Compound() ) {
-            std::cout << "<Statement>   ::=  <Compound>" << std::endl;
-            return true;
-        }
+        else if (token.lexeme == "put") {
+            if ( Put() ) {
+                std::cout << "<Statement>   ::=  <Put>" << std::endl;
+                return true;
+            }
+        }  
+        else if (token.lexeme == "get") {
+            if ( Get() ) {
+                std::cout << "<Statement>   ::=  <Get>" << std::endl;
+                return true;
+            }
+        }    
+        else if (token.lexeme == "while") {
+            if ( While() ) {
+                std::cout << "<Statement>   ::=  <While>" << std::endl;
+                return true;
+            }
+        }   
+        else if (token.lexeme == "{") {
+            if ( Compound() ) {
+                std::cout << "<Statement>   ::=  <Compound>" << std::endl;
+                return true;
+            }
+        }    
+            
         return false;
     }
 
@@ -314,15 +320,9 @@ public:
         follow = { {, }, $$, <identifier>, if, put, get, while, otherwise, fi, e}
     */
     bool Compound () {
-        token = lexer();
-        if (token.lexeme == "{") {
-            if ( Statement() ) {
-                token = lexer();
-                if (token.lexeme == "{") {
-                    std::cout << "<Compound>    ::=  {  <Statement List>  }" << std::endl;
-                    return true;
-                }
-            }
+        if ( Statement() ) {
+            std::cout << "<Compound>    ::=  {  <Statement List>  }" << std::endl;
+            return true;
         }
         return false;
     }
@@ -334,23 +334,18 @@ public:
     */
 
     bool Assign () {
-        std::cout << "------Inside assign with token : " << token;
-        if (token.type == Lexer::IDENTIFIER) {
-            std::cout << "IDENTIFIER test passed" << std::endl;
-            token = lexer();
-            std::cout << "current token : " << token;
-            if (token.lexeme == "=") {
-                if ( Expression() ) {
-                    std::cout << "*******Expression passed********* with token : " << token << std::endl;
-                    // token = lexer();
-                    if (token.lexeme == ";") {
-                        // std::cout << 
-                        std::cout << "<Assign>    ::=  <Identifier> = <Expression> ;" << std::endl;
-                        return true;
-                    }
+        token = lexer();
+        if (token.lexeme == "=") {
+            if ( Expression() ) {
+                // token = lexer();
+                if (token.lexeme == ";") {
+                    // std::cout << 
+                    std::cout << "<Assign>    ::=  <Identifier> = <Expression> ;" << std::endl;
+                    return true;
                 }
             }
         }
+
         else {
             if (std::find(follow["Assign"].begin(),follow["Assign"].end(), token.lexeme) != follow["Assign"].end()) {
                 std::cout << "<Assign>                ::=  <Identifier> = <Expression> ;" << std::endl;
