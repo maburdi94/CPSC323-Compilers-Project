@@ -62,11 +62,6 @@ public:
     
     friend std::ostream& operator<<(std::ostream& os, Token &t);
     
-    // Evaluate lexer in bool expression.
-    // (true - stream not done)
-    operator bool() const {
-        return istream->good();
-    }
     
     std::string getline() {
         std::streampos pos = istream->tellg();
@@ -82,13 +77,13 @@ public:
         return line;
     }
     
-    OutputType &operator()(OutputType *token) {
+    
+    void operator()(OutputType *token) {
         *token = this->operator()();
-        return *token;
     }
     
-    OutputType operator()() {
-        Lexer::OutputType t;
+    OutputType &&operator()() {
+        OutputType t;
         
         // We need this to skip things like comments.
         bool skip = false;
@@ -248,7 +243,7 @@ public:
         // Line number where token found.
         t.line = current_line;
         
-        return t;
+        return std::move(t);
     }
 };
 

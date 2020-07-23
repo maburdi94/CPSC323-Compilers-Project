@@ -20,18 +20,16 @@ public:
         std::string line;
         unsigned long lineNumber;
 
-        SyntaxError(const std::string &err_msg, const std::string &line, Lexer::OutputType *token) : error_msg(err_msg), lineNumber(token->line), line(line) {}
+        SyntaxError(const std::string &err_msg, const std::string &line, Lexer::OutputType &token) : error_msg(err_msg), lineNumber(token.line), line(line) {}
         
         friend std::ostream &operator<<(std::ostream &os, SyntaxError &e);
     };
     
     Lexer lexer;
-    Lexer::OutputType *token;
+    Lexer::OutputType token;
     
-
     Parser(std::istream &istream) : lexer(istream) {}
     Parser(Lexer &lexer) : lexer(lexer) {}
-    
     
     bool isidentifier(const std::string &s) {
         if (!isalpha(s[0])) return false;   // 1st char must be letter
@@ -50,24 +48,25 @@ public:
     
     
     void Rat20SU() {
-        lexer(token);
         
-        if (token->lexeme != "$$") {
+        lexer(&token);
+        
+        if (token.lexeme != "$$") {
             throw SyntaxError("Program must start with $$", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl;  // $$
+        std::cout << token << std::endl;  // $$
         
         std::cout << "$$ <Opt Declaration List>  <Statement List> $$" << std::endl;
             
         OptDeclList();
         StatementList();
         
-        if (token->lexeme != "$$") {
+        if (token.lexeme != "$$") {
             throw SyntaxError("Program must start with $$", lexer.getline(), token);
         }
 
-        std::cout << *token << std::endl; // $$
+        std::cout << token << std::endl; // $$
         
     }
     
@@ -76,9 +75,9 @@ public:
         
         static const std::unordered_set<std::string> firsts = {"boolean", "integer"};
         
-        lexer(token);
+        lexer(&token);
 
-        if (firsts.find(token->lexeme) != firsts.end()) {
+        if (firsts.find(token.lexeme) != firsts.end()) {
             std::cout << "<Opt Declaration List>  ->  <Declaration List>" << std::endl;
             DeclList();
         }
@@ -94,15 +93,22 @@ public:
         std::cout << "<Declaration List>  ->  <Declaration> ; <Declaration List'>" << std::endl;
         
         Declaration();
+        
+        lexer(&token);
+        
+        if (token.lexeme != ";") {
+            throw SyntaxError("Missing semicolon at the end of declaration", lexer.getline(), token);
+        }
+        
         DeclListP();
         
     }
     
     
     void DeclListP() {
-        lexer(token);
+        lexer(&token);
         
-        if(token->lexeme == "boolean" || token->lexeme == "integer") {
+        if(token.lexeme == "boolean" || token.lexeme == "integer") {
             std::cout << "<Declaration List'>  ->  <Declaration List>" << std::endl;
             DeclList();
         }
@@ -119,27 +125,25 @@ public:
         
         Qualifier();
         
-        lexer(token);
+        lexer(&token);
         
         Identifier();
-        
-        std::cout << lexer(token) << std::endl; // ;
         
     }
     
     
     void Qualifier() {
-         std::cout << "<Qualifier>  -> " << *token << std::endl;
+         std::cout << "<Qualifier>  -> " << token << std::endl;
     }
     
     
     void Identifier() {
         
-        if (!isidentifier(token->lexeme)) {
-            throw SyntaxError("Invalid identifier " + token->lexeme, lexer.getline(), token);
+        if (!isidentifier(token.lexeme)) {
+            throw SyntaxError("Invalid identifier " + token.lexeme, lexer.getline(), token);
         }
         
-         std::cout << "<Identifier>  -> " << *token << std::endl;
+         std::cout << "<Identifier>  -> " << token << std::endl;
         
     }
     
@@ -149,7 +153,7 @@ public:
         
         Statement();
         
-        lexer(token);
+        lexer(&token);
         
         StatementListP();
         
@@ -160,7 +164,7 @@ public:
         
         static const std::unordered_set<std::string> firsts = {"{", "if", "put", "get", "while"};
         
-        if(firsts.find(token->lexeme) != firsts.end() || isidentifier(token->lexeme)) {
+        if(firsts.find(token.lexeme) != firsts.end() || isidentifier(token.lexeme)) {
             std::cout << "<Statement List'>  ->  <Statement List>" << std::endl;
             StatementList();
         }
@@ -173,27 +177,27 @@ public:
     
     
     void Statement() {
-        if (token->lexeme == "{") {
+        if (token.lexeme == "{") {
             std::cout << "<Statement>  ->  <Compound>" << std::endl;
             Compound();
         }
-        else if (token->lexeme == "if") {
+        else if (token.lexeme == "if") {
             std::cout << "<Statement>  ->  <If>" << std::endl;
             If();
         }
-        else if (token->lexeme == "put") {
+        else if (token.lexeme == "put") {
             std::cout << "<Statement>  ->  <Put>" << std::endl;
             Put();
         }
-        else if (token->lexeme == "get") {
+        else if (token.lexeme == "get") {
             std::cout << "<Statement>  ->  <Get>" << std::endl;
             Get();
         }
-        else if (token->lexeme == "while") {
+        else if (token.lexeme == "while") {
             std::cout << "<Statement>  ->  <While>" << std::endl;
             While();
         }
-        else if (isidentifier(token->lexeme)) {
+        else if (isidentifier(token.lexeme)) {
             std::cout << "<Statement>  ->  <Assign>" << std::endl;
             Assign();
         }
@@ -207,17 +211,17 @@ public:
     void Compound() {
         std::cout << "<Compound>  ->  {  <Statement List>  }" << std::endl << std::endl;
         
-        std::cout << *token << std::endl; // {
+        std::cout << token << std::endl; // {
         
-        lexer(token);
+        lexer(&token);
         
         StatementList();
         
-        if (token->lexeme != "}") {
+        if (token.lexeme != "}") {
             throw SyntaxError("Expected }", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // }
+        std::cout << token << std::endl; // }
 
     }
     
@@ -225,29 +229,41 @@ public:
     void If() {
         std::cout << "<If>  ->  if  ( <Condition>  ) <Statement> <Otherwise> fi" << std::endl;
         
-        std::cout << *token << std::endl; // if
+        std::cout << token << std::endl; // if
         
-        if (token->lexeme != "if") {
+        if (token.lexeme != "if") {
             throw SyntaxError("Assignment expression missing =", lexer.getline(), token);
         }
         
-        lexer(token);
+        lexer(&token);
         
-        std::cout << *token << std::endl; // (
+        if (token.lexeme != "(") {
+            throw SyntaxError("Expected (", lexer.getline(), token);
+        }
+        
+        std::cout << token << std::endl; // (
         
         Condition();
         
-        std::cout << *token << std::endl; // )
+        if (token.lexeme != ")") {
+            throw SyntaxError("Expected )", lexer.getline(), token);
+        }
         
-        lexer(token);
+        std::cout << token << std::endl; // )
+        
+        lexer(&token);
         
         Statement();
         
-        lexer(token);
+        lexer(&token);
         
         Otherwise();
         
-        std::cout << *token <<std::endl; // fi
+        if (token.lexeme != "fi") {
+            throw SyntaxError("Expected fi", lexer.getline(), token);
+        }
+        
+        std::cout << token <<std::endl; // fi
         
     }
     
@@ -258,38 +274,34 @@ public:
         
         Identifier();
         
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != "=") {
+        if (token.lexeme != "=") {
             throw SyntaxError("Assignment expression missing =", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // =
+        std::cout << token << std::endl; // =
         
         Expression();
         
-        if (token->lexeme != ";") {
+        if (token.lexeme != ";") {
             throw SyntaxError("Missing semicolon at the end of line", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // ;
+        std::cout << token << std::endl; // ;
         
     }
     
     
     void Otherwise() {
-        if (token->lexeme == "otherwise") {
+        if (token.lexeme == "otherwise") {
             std::cout << "<Otherwise>  ->  otherwise  <Statement>" << std::endl;
             
-            lexer(token);
+            lexer(&token);
             
             Statement();
             
-            lexer(token); // fi
-            
-            if (token->lexeme != "fi") {
-                throw SyntaxError("Expected closing fi", lexer.getline(), token);
-            }
+            lexer(&token); // fi
             
         }
         else { // token is fi
@@ -302,35 +314,35 @@ public:
     void Put() {
         std::cout << "<Put>  ->  put ( <identifier> );" << std::endl;
         
-        std::cout << *token << std::endl; // put
+        std::cout << token << std::endl; // put
         
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != "(") {
+        if (token.lexeme != "(") {
             throw SyntaxError("Expected (", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // (
+        std::cout << token << std::endl; // (
         
-        lexer(token);
+        lexer(&token);
         
         Identifier();
         
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != ")") {
+        if (token.lexeme != ")") {
             throw SyntaxError("Expected )", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // )
+        std::cout << token << std::endl; // )
         
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != ";") {
+        if (token.lexeme != ";") {
             throw SyntaxError("Missing semicolon at the end of line", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // ;
+        std::cout << token << std::endl; // ;
         
     }
     
@@ -338,33 +350,33 @@ public:
     void Get() {
         std::cout << "get ( <Identifier> );" << std::endl;
         
-        std::cout << *token; // get
+        std::cout << token; // get
         
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != "(") {
+        if (token.lexeme != "(") {
             throw SyntaxError("Expected (", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // (
+        std::cout << token << std::endl; // (
         
-        lexer(token);
+        lexer(&token);
         
         Identifier();
         
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != ")") {
+        if (token.lexeme != ")") {
             throw SyntaxError("Expected )", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // )
+        std::cout << token << std::endl; // )
         
-        if (token->lexeme != ";") {
+        if (token.lexeme != ";") {
             throw SyntaxError("Missing semicolon at the end of line", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // ;
+        std::cout << token << std::endl; // ;
         
     }
     
@@ -372,25 +384,25 @@ public:
     void While() {
         std::cout << "<While>  ->  while ( <Condition>  ) <Statement>" << std::endl;
         
-        std::cout << *token << std::endl; // while
+        std::cout << token << std::endl; // while
        
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme != "(") {
+        if (token.lexeme != "(") {
             throw SyntaxError("Expected (", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // (
+        std::cout << token << std::endl; // (
         
         Condition();
         
-        if (token->lexeme != ")") {
+        if (token.lexeme != ")") {
             throw SyntaxError("Expected )", lexer.getline(), token);
         }
         
-        std::cout << *token << std::endl; // )
+        std::cout << token << std::endl; // )
         
-        lexer(token);
+        lexer(&token);
         
         Statement();
         
@@ -408,8 +420,8 @@ public:
     
     
     void Relop() {
-        if (token->lexeme == "==" || token->lexeme == ">" || token->lexeme == "<") {
-            std::cout << "<Relop>  -> " << *token << std::endl;
+        if (token.lexeme == "==" || token.lexeme == ">" || token.lexeme == "<") {
+            std::cout << "<Relop>  -> " << token << std::endl;
         }
         else {
             throw SyntaxError("Expected relational operator (==, >, <)", lexer.getline(), token);
@@ -427,13 +439,13 @@ public:
     
     
     void ExpressionP() {
-        if (token->lexeme == "+") {
+        if (token.lexeme == "+") {
             std::cout << "<Expression'>  ->  +<Term><Expression'>" << std::endl;
             
             Term();
             ExpressionP();
         }
-        else if (token->lexeme == "-") {
+        else if (token.lexeme == "-") {
             std::cout << "<Expression'>  ->  -<Term><Expression'>" << std::endl;
            
             Term();
@@ -456,13 +468,13 @@ public:
     
     
     void TermP() {
-        if (token->lexeme == "*") {
+        if (token.lexeme == "*") {
             std::cout << "<Term'>  ->  *<Factor><Term'>" << std::endl;
             
             Factor();
             TermP();
         }
-        else if (token->lexeme == "/") {
+        else if (token.lexeme == "/") {
             std::cout << "<Term'>  ->  /<Factor><Term'>" << std::endl;
             
             Factor();
@@ -477,12 +489,12 @@ public:
     
     
     void Factor() {
-        lexer(token);
+        lexer(&token);
         
-        if (token->lexeme == "-") {
+        if (token.lexeme == "-") {
             std::cout << "<Factor>  ->  -<Primary>" << std::endl;
             
-            lexer(token);
+            lexer(&token);
             Primary();
         }
         else {
@@ -491,36 +503,36 @@ public:
             Primary();
         }
         
-        lexer(token);
+        lexer(&token);
         
     }
     
     
     void Primary() {
         
-        if (isidentifier(token->lexeme)) {
+        if (isidentifier(token.lexeme)) {
             std::cout << "<Primary>  ->  <Identifier>" << std::endl;
             
             Identifier();
         }
-        else if (isinteger(token->lexeme)) {
+        else if (isinteger(token.lexeme)) {
             std::cout << "<Primary>  ->  <Integer>" << std::endl;
             
             Integer();
         }
-        else if (token->lexeme == "true" || token->lexeme == "false") {
+        else if (token.lexeme == "true" || token.lexeme == "false") {
             std::cout << "<Primary>" << std::endl;
             
-            std::cout << *token << std::endl;
+            std::cout << token << std::endl;
         }
-        else if (token->lexeme == "(") {
+        else if (token.lexeme == "(") {
             Expression();
             
-            if (token->lexeme != ")") {
+            if (token.lexeme != ")") {
                 throw SyntaxError("Expected ) at end of expression", lexer.getline(), token);
             }
             
-            std::cout << lexer(token) << std::endl; // )
+            std::cout << token << std::endl; // )
             
         }
         else {
@@ -530,7 +542,7 @@ public:
     
     
     void Integer() {
-         std::cout << "<Integer>  -> " << *token << std::endl;
+         std::cout << "<Integer>  -> " << token << std::endl;
     }
     
     

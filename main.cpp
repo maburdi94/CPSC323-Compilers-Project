@@ -6,21 +6,15 @@
 
 int main(int argc, const char * argv[]) {
     
-    std::string filename = "";
-    
+    std::string filename;
     std::ifstream ifile;
     
-//    std::cout << "Enter filename (.rat file): ";
-//    std::getline(std::cin, filename);
-//    ifile.open(filename);
-
-    ifile.open("/Users/maburdi/Documents/Education/Cal State Fullerton/Summer 2020/CPSC 323 Compilers and Programming Languages/Project/test2.rat");
-
-//    Lexer lexer(ifile);
-//    while (lexer) std::cout << lexer();
+    std::cout << "Enter file path for Rat20SU source code: ";
+    std::getline(std::cin, filename);
+    ifile.open(filename);
     
     Parser parser(ifile);
-    parser();
     
-    ifile.close();
+    parser();
+
 }
