@@ -10,9 +10,11 @@
 #define lexer_h
 
 #include <iostream>
+// #include "doublyLinkedList.h"
 
 class Lexer {
     std::istream *istream;
+    int backUpCount;
     
     const std::string keywords[10] = {
         "while",
@@ -41,9 +43,11 @@ public:
         friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
 
+    OutputType m_prevToken;
     
-    
-    Lexer(std::istream &is) : istream(&is) {}
+    Lexer(std::istream &is) : istream(&is) {
+        backUpCount = 0;
+    }
     
     bool isoperator(char &c) {
         return c == '+' ||
@@ -78,11 +82,17 @@ public:
     }
 
 
-    void backUp() {
-
+    void backUp(Lexer::OutputType prevToken) {
+        m_prevToken = prevToken;
+        backUpCount += 1;
     }
-    
+
     Lexer::OutputType operator()() {
+        if (backUpCount > 0) {
+            backUpCount -= 1;
+            return m_prevToken;
+        }
+
         Lexer::OutputType t;
         
         static unsigned long line = 1;
