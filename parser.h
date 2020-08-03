@@ -6,9 +6,15 @@
 #include <map>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <exception>
+#include <vector>
+#include <utility>
 
 #include "lexer.h"
+
+
+size_t MEMORY_ADDRESS = 5000;
 
 
 class Parser {
@@ -25,11 +31,57 @@ public:
         friend std::ostream &operator<<(std::ostream &os, SyntaxError &e);
     };
     
+    
+    struct Symbol {
+        size_t address;
+        enum Type {Boolean, Integer} type;
+    };
+    
+    struct Instruction {
+        enum Op {
+            PUSHI, PUSHM, POPM, STDOUT, STDIN, ADD, SUB, MUL, DIV, GRT, LES, EQU, JUMPZ, JUMP, LABEL
+        } op;
+        size_t operand;
+        
+        friend std::ostream & operator<<(std::ostream &, Parser::Instruction &);
+    };
+    
+    // Symbol Table
+    std::unordered_map<std::string, Symbol> symbols;
+    
+    // Assembly instructions
+    std::vector<Instruction> instructions;
+    
+    
     Lexer lexer;
     Lexer::OutputType token;
     
     Parser(std::istream &istream) : lexer(istream) {}
     Parser(Lexer &lexer) : lexer(lexer) {}
+    
+    
+    void operator()() {
+        try {
+            Rat20SU();
+            
+            for (int i = 0; i < instructions.size(); i++) {
+                std::cout.width(3);
+                std::cout << std::right << (i + 1);
+                
+                std::cout.width(2);
+                std::cout << std::left << ".";
+                
+                std::cout.width(6);
+                std::cout << std::left << instructions[i];
+            }
+            
+        } catch (SyntaxError &e) {
+            std::cout << e << std::endl;
+        }
+    }
+    
+    
+private:
     
     void expect(Lexer::OutputType &token, const std::string &value, const std::string &msg) {
         expect(token, token.lexeme == value, msg);
@@ -44,6 +96,7 @@ public:
             throw SyntaxError(msg, lexer.getline(), token);
         }
     }
+    
     
     bool isidentifier(const std::string &s) {
         if (!isalpha(s[0])) return false;   // 1st char must be letter
@@ -133,9 +186,16 @@ public:
         
         Qualifier();
         
-        lexer(&token);
+        // Type of declaration
+        Symbol::Type type = token.lexeme == "boolean" ?
+            Symbol::Type::Boolean :
+            Symbol::Type::Integer;
         
+        lexer(&token);
         Identifier();
+        
+        // Add symbol to table
+        symbols[token.lexeme] = {MEMORY_ADDRESS++, type};
         
     }
     
@@ -268,6 +328,8 @@ public:
         
         Identifier();
         
+        std::string iden = token.lexeme;
+        
         lexer(&token);
         
         expect(token, "=", "Assignment expression missing =");
@@ -279,6 +341,8 @@ public:
         expect(token, ";", "Missing semicolon at the end of line");
         
         std::cout << token << std::endl; // ;
+        
+        instructions.push_back({Instruction::POPM, symbols[iden].address});
         
     }
     
@@ -361,44 +425,61 @@ public:
     
     void While() {
         std::cout << "<While>  ->  while ( <Condition>  ) <Statement>" << std::endl;
-        
         std::cout << token << std::endl; // while
+        
+        instructions.push_back({Instruction::LABEL, NULL});
+        size_t addr = instructions.size();
        
         lexer(&token);
-
         expect(token, "(", "Expected (");
-        
         std::cout << token << std::endl; // (
         
         Condition();
         
-        expect(token, ")", "Expected )");
+        Instruction &back_patch = instructions.back();
         
+        expect(token, ")", "Expected )");
         std::cout << token << std::endl; // )
         
         lexer(&token);
-        
         Statement();
         
+        instructions.push_back({Instruction::JUMP, addr});
+        
+        back_patch.operand = instructions.size() + 1;
     }
     
     
     void Condition() {
         std::cout << "<Condition>  ->  <Expression> <Relop> <Expression>" << std::endl;
 
-        Expression();
-        Relop();
-        Expression();
+        Expression(); // PUSHM
         
+        Lexer::OutputType op = token; // (copy) operator
+        
+        Relop();      // no change to instructions
+        Expression(); // PUSHM
+        
+        if (op.lexeme == "==") {
+            instructions.push_back({Instruction::EQU, NULL});
+            instructions.push_back({Instruction::JUMPZ, NULL});
+        } else if (op.lexeme == "<") {
+            instructions.push_back({Instruction::LES, NULL});
+            instructions.push_back({Instruction::JUMPZ, NULL});
+        } else if (op.lexeme == ">") {
+            instructions.push_back({Instruction::GRT, NULL});
+            instructions.push_back({Instruction::JUMPZ, NULL});
+        }
+        
+        // JUMPZ is always the last instruction
     }
     
     
     void Relop() {
         
         expect(token, {"==", ">", "<"}, "Expected relational operator (==, >, <)");
-
+        
         std::cout << "<Relop>  -> " << token << std::endl;
-
     }
     
     
@@ -416,12 +497,14 @@ public:
             std::cout << "<Expression'>  ->  +<Term><Expression'>" << std::endl;
             
             Term();
+            instructions.push_back({Instruction::ADD, NULL});
             ExpressionP();
         }
         else if (token.lexeme == "-") {
             std::cout << "<Expression'>  ->  -<Term><Expression'>" << std::endl;
            
             Term();
+            instructions.push_back({Instruction::SUB, NULL});
             ExpressionP();
         }
         else {
@@ -445,12 +528,14 @@ public:
             std::cout << "<Term'>  ->  *<Factor><Term'>" << std::endl;
             
             Factor();
+            instructions.push_back({Instruction::MUL, NULL});
             TermP();
         }
         else if (token.lexeme == "/") {
             std::cout << "<Term'>  ->  /<Factor><Term'>" << std::endl;
             
             Factor();
+            instructions.push_back({Instruction::DIV, NULL});
             TermP();
         }
         else {
@@ -487,11 +572,15 @@ public:
             std::cout << "<Primary>  ->  <Identifier>" << std::endl;
             
             Identifier();
+            
+            instructions.push_back({Instruction::PUSHM, symbols[token.lexeme].address});
         }
         else if (isinteger(token.lexeme)) {
             std::cout << "<Primary>  ->  <Integer>" << std::endl;
             
             Integer();
+            
+            instructions.push_back({Instruction::PUSHI, stoul(token.lexeme)});
         }
         else if (token.lexeme == "true" || token.lexeme == "false") {
             std::cout << "<Primary>" << std::endl;
@@ -523,17 +612,37 @@ public:
          std::cout << "<Empty>  ->  ε" << std::endl;
     }
     
-    
-    void operator()() {
-        try {
-            Rat20SU();
-        } catch (SyntaxError &e) {
-            std::cout << e << std::endl;
-        }
+};
+
+std::ostream & operator<<(std::ostream &os, Parser::Instruction &t) {
+
+    switch(t.op)
+    {
+        case Parser::Instruction::PUSHI:     os << "PUSHI";  break;
+        case Parser::Instruction::PUSHM:     os << "PUSHM";  break;
+        case Parser::Instruction::POPM:      os << "POPM";   break;
+        case Parser::Instruction::STDOUT:    os << "STDOUT"; break;
+        case Parser::Instruction::STDIN:     os << "STDIN";  break;
+        case Parser::Instruction::ADD:       os << "ADD";    break;
+        case Parser::Instruction::SUB:       os << "SUB";    break;
+        case Parser::Instruction::MUL:       os << "MUL";    break;
+        case Parser::Instruction::DIV:       os << "DIV";    break;
+        case Parser::Instruction::GRT:       os << "GRT";    break;
+        case Parser::Instruction::LES:       os << "LES";    break;
+        case Parser::Instruction::EQU:       os << "EQU";    break;
+        case Parser::Instruction::JUMPZ:     os << "JUMPZ";  break;
+        case Parser::Instruction::JUMP:      os << "JUMP";   break;
+        case Parser::Instruction::LABEL:     os << "LABEL";  break;
+            
+        default:         os.setstate(std::ios_base::failbit);
     }
     
+    if (t.operand > 0) std::cout << t.operand;
     
-};
+    std::cout << std::endl;
+    
+    return os;
+}
 
 std::ostream &operator<<(std::ostream &os, Parser::SyntaxError &e) {
     os << "\nsyntax error in line " << e.lineNumber << ":\t" << e.line << "\n" << e.error_msg << std::endl;
