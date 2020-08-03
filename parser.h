@@ -371,9 +371,7 @@ private:
         std::cout << token << std::endl; // put
         
         lexer(&token);
-        
         expect(token, "(", "Expected (");
-        
         std::cout << token << std::endl; // (
         
         lexer(&token);
@@ -381,9 +379,7 @@ private:
         Identifier();
         
         lexer(&token);
-        
         expect(token, ")", "Expected )");
-        
         std::cout << token << std::endl; // )
         
         lexer(&token);
@@ -401,9 +397,7 @@ private:
         std::cout << token; // get
         
         lexer(&token);
-        
         expect(token, "(", "Expected (");
-        
         std::cout << token << std::endl; // (
         
         lexer(&token);
@@ -411,9 +405,7 @@ private:
         Identifier();
         
         lexer(&token);
-        
         expect(token, ")", "Expected )");
-        
         std::cout << token << std::endl; // )
         
         expect(token, ";", "Missing semicolon at the end of line");
@@ -436,7 +428,7 @@ private:
         
         Condition();
         
-        Instruction &back_patch = instructions.back();
+        size_t back_patch = instructions.size() - 1;
         
         expect(token, ")", "Expected )");
         std::cout << token << std::endl; // )
@@ -446,7 +438,7 @@ private:
         
         instructions.push_back({Instruction::JUMP, addr});
         
-        back_patch.operand = instructions.size() + 1;
+        instructions[back_patch].operand = instructions.size() + 1;
     }
     
     
