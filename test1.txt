@@ -1,0 +1,25 @@
+$$
+
+integer a;
+
+[* This is a comment *]
+
+integer    ax;
+
+boolean    b_dog;
+
+b_dog = 32;
+
+[* This is a comment *]
+
+if (b_dog==12) {
+    ax = 54;
+} otherwise {
+    ax = 55;
+} fi
+
+[* End comment *]
+
+a=89;
+
+$$

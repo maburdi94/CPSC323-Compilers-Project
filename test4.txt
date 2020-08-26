@@ -1,0 +1,8 @@
+$$
+
+integer i;
+integer max;
+
+while (i < max) i = i + 1;
+
+$$

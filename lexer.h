@@ -1,20 +1,14 @@
-//
-//  lexer.h
-//  Assignment 1
-//
-//  Created by Michael Burdi on 7/16/20.
-//  Copyright © 2020 Michael Burdi. All rights reserved.
-//
 
 #ifndef lexer_h
 #define lexer_h
 
 #include <iostream>
+#include <unordered_set>
 
 class Lexer {
     std::istream *istream;
     
-    const std::string keywords[10] = {
+    const std::unordered_set<std::string> keywords = {
         "while",
         "if",
         "fi",
@@ -27,6 +21,9 @@ class Lexer {
         "boolean"
     };
     
+    // Keep track of the line number.
+    unsigned long current_line = 1;
+    
 public:
     
     enum Token {NONE, IDENTIFIER, KEYWORD, SEPARATOR, OPERATOR, INTEGER, UNKNOWN};
@@ -34,6 +31,9 @@ public:
     struct OutputType {
         Token type = NONE;
         std::string lexeme;
+        unsigned long line = 0;
+
+        friend std::ostream & operator<<(std::ostream &os, Lexer::OutputType t);
     };
     
     Lexer(std::istream &is) : istream(&is) {}
@@ -56,149 +56,201 @@ public:
         c == ';';
     }
 
-    bool isunderscore(char &c) {
-        return c == '_';
-    }
-
     bool iskeyword(std::string &s) {
-        size_t len = sizeof(keywords) / sizeof(keywords[0]);
-        auto f = std::find(keywords, keywords + len, s);
-        return f != (keywords + len);
+        return keywords.find(s) != keywords.end();
     }
     
     friend std::ostream& operator<<(std::ostream& os, Token &t);
     
-    /* Allows the use of Lexer object in a conditional statement
-     to test if it has finished analyzing the input. */
-    operator bool() const {
-        return istream->good();
+    
+    std::string getline() {
+        std::streampos pos = istream->tellg();
+        istream->seekg (0, istream->beg);
+        
+        unsigned long i = current_line;
+        std::string line;
+        
+        while (i--) std::getline(*istream, line);
+        
+        istream->seekg(pos, istream->beg);
+        
+        return line;
     }
     
-    Lexer::OutputType operator()() {
-        Lexer::OutputType t;
+    
+    void operator()(OutputType *token) {
+        *token = this->operator()();
+    }
+    
+    OutputType &&operator()() {
+        OutputType t;
         
-        char c;
-        while (istream->get(c)) {
+        // We need this to skip things like comments.
+        bool skip = false;
+        
+        
+        // Iterate char-by-char and remember last char.
+        for (char c = 0, b = c; istream->get(c); b = c) {
             
+            
+            // Skip if this char and last char [* (comment)
+            // Don't skip if this char and last char *]. (end of comment)
+            skip = (!skip && (c == '*' && b == '['))
+            || (skip && !(c == ']' && b == '*'));
+            
+            
+            // If skip, loop (or EOF kills loop).
+            // Only encounter *] will reset skip.
+            if (skip) continue;
+            
+            // Check if c is space char
             if (isspace(c)) {
                 
-                // Discard space. Epsilon. No action taken.
+                // Increment line on \n char
+                if (c == '\n') current_line++;
                 
-                if (t.type != NONE) {
-                    // Terminating
+                // Terminate all other states on space
+                if (t.type != NONE)
+                    break;
+            }
+            // Check if c is letter
+            else if (isalpha(c)) {
+                // State is NONE. Go to IDENTIFIER
+                if (t.type == NONE) {
+                    t.type = IDENTIFIER;
+                    t.lexeme = c;
+                }
+                // State is IDENTIFIER. Go to IDENTIFIER
+                else if (t.type == IDENTIFIER) {
+                    t.lexeme += c;
+                }
+                // State is INTEGER. Go to UNKNOWN
+                else if (t.type == INTEGER) {
+                    t.type = UNKNOWN;
+                    t.lexeme += c;
+                }
+                // State is UNKNOWN. Go to UNKNOWN
+                else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
+                }
+                // Terminate for all other states.
+                else {
+                    istream->putback(c);
                     break;
                 }
-                
             }
-            else if (c == '$') {
+            // Check if c is a underscore
+            else if (c == '_') {
+                // State is NONE. Go to UNKNOWN
+                if (t.type == NONE) {
+                    t.type = UNKNOWN;
+                    t.lexeme = c;
+                }
+                // State is IDENTIFIER. Go to IDENTIFIER
+                else if (t.type == IDENTIFIER) {
+                    t.lexeme += c;
+                }
+                // All other states go to UNKNOWN
+                else {
+                    t.type = UNKNOWN;
+                    t.lexeme += c;
+                }
+            }
+            // Check if c is a separator
+            else if (isseparator(c)) {
+                // State is NONE. Go to SEPARATOR
+                if (t.type == NONE) {
+                    t.type = SEPARATOR;
+                    t.lexeme = c;
+                }
+                // Terminate for all other states.
+                else {
+                    istream->putback(c);
+                    break;
+                }
+            }
+            // Check if c is a operator
+            else if (isoperator(c)) {
+                // State is NONE. Go to OPERATOR
+                if (t.type == NONE) {
+                    t.type = OPERATOR;
+                    t.lexeme = c;
+                }
+                // "Special" operator ==
+                else if (c == '=' && t.lexeme == "=") {
+                    t.lexeme += c;
+                }
+                // Terminate for all other states.
+                else {
+                    istream->putback(c);
+                    break;
+                }
+            }
+            // Check if c is a digit
+            else if (isnumber(c)) {
+                
+                // State is NONE. Go to INTEGER
+                if (t.type == NONE) {
+                    t.type = INTEGER;
+                    t.lexeme = c;
+                }
+                // State is IDENTIFIER. Go to UNKNOWN
+                else if (t.type == IDENTIFIER) {
+                    t.type = UNKNOWN;
+                    t.lexeme += c;
+                }
+                // State is INTEGER. Go to INTEGER
+                else if (t.type == INTEGER) {
+                    t.lexeme += c;
+                }
+                // State is UNKNOWN. Go to UNKNOWN
+                else if (t.type == UNKNOWN) {
+                    t.lexeme += c;
+                }
+                // Terminate for all other states.
+                else {
+                    istream->putback(c);
+                    break;
+                }
+            }
+            // c is none of the above
+            else {
+                
+                // UNKNOWN token
                 t.type = UNKNOWN;
                 t.lexeme += c;
                 
-                if (istream->get(c) && c == '$') {
+                // "Special" UNKNOWN token is KEYWORD
+                if (t.lexeme == "$$") {
                     t.type = KEYWORD;
-                    t.lexeme += c;
-                } else {
-                    istream->putback(c);
+                    break;
                 }
                 
-                break;
-            }
-            else if (c == '[') {
-                if (istream->get(c) && c == '*') {
-                    // This is a comment
-                    for (char b=c; istream->get(c) && istream; b=c) {
-                        if (b=='*' && c==']') break;
-                    }
-                } else {
-                    t.type = UNKNOWN;
-                    
-                    t.lexeme += c;
-                }
-            }
-            else if (isalpha(c) || isunderscore(c)) {
-                if (t.type == IDENTIFIER || t.type == UNKNOWN) {
-                    // Accept
-                    t.lexeme += c;
-                }
-                else if (t.type == NONE) {
-                    // Assume identifier
-                    t.type = IDENTIFIER;
-                    
-                    // Accept
-                    t.lexeme += c;
-                }
-                else { // OPERATOR, SEPARATOR, INTEGER
-                    istream->putback(c);
-                    break;
-                }
-            }
-            else if (isseparator(c)) {
-                if (t.type == NONE) {
-                    t.type = SEPARATOR;
-                    
-                    // Accept
-                    t.lexeme += c;
-                }
-                else {
-                    istream->putback(c);
-                    break;
-                }
-            }
-            else if (isoperator(c)) {
-                if (t.type == NONE) {
-                    t.type = OPERATOR;
-                    
-                    // Accept
-                    t.lexeme += c;
-                    
-                    if (c == '=') {
-                        if (istream->get(c) && c == '=') {
-                            // Equality operator ==
-                            t.lexeme += c;
-                        } else {
-                            istream->putback(c);
-                        }
-                    }
-                }
-                else {
-                    istream->putback(c);
-                    break;
-                }
-            }
-            else if (isnumber(c)) {
-                if (t.type == NONE) {
-                    t.type = INTEGER;
-                    
-                    // Accept
-                    t.lexeme += c;
-                }
-                else if (t.type == IDENTIFIER) {
-                    t.type = UNKNOWN;
-                    
-                    // Accept
-                    t.lexeme += c;
-                }
-                else if (t.type == INTEGER || t.type == UNKNOWN) {
-                    // Accept
-                    t.lexeme += c;
-                }
-                else {
-                    istream->putback(c);
-                    break;
+                // Don't return comments. Reset.
+                if (t.lexeme == "[]") {
+                    t.type = NONE;
+                    t.lexeme = "";
                 }
             }
         }
         
         
-        // We assumed keyword, but now we check.
-        // If not keyword, must be identifier.
+        // We assumed IDENTIFIER. Check if it is KEYWORD
         if (t.type == IDENTIFIER && iskeyword(t.lexeme)) {
             t.type = KEYWORD;
         }
         
-        return t;
+        // Line number where token found.
+        t.line = current_line;
+        
+        return std::move(t);
     }
 };
+
+std::ostream & operator<<(std::ostream &os, Lexer::OutputType t) {
+    os << t.type << " " << t.lexeme << std::endl;
+    return os;
+}
 
 std::ostream& operator<<(std::ostream& os, Lexer::Token &t)
 {
@@ -215,6 +267,5 @@ std::ostream& operator<<(std::ostream& os, Lexer::Token &t)
     }
     return os;
 }
-
 
 #endif /* lexer_h */
